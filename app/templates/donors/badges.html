@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Donor Badges & Leaderboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="text-center mb-5">
+    <h2 class="fw-bold"><i class="fas fa-award text-warning me-2"></i>Donor Milestones & Recognition</h2>
+    <p class="text-muted">Celebrating blood heroes who keep thalassemia warriors alive across Pakistan</p>
+  </div>
+
+  <!-- Badges Row -->
+  <div class="row g-4 mb-5">
+    {% for b in badges %}
+    <div class="col-md-4 col-lg-2-4">
+      <div class="card shadow-sm h-100 text-center p-3 border-warning">
+        <div class="avatar-circle mx-auto mb-3 bg-warning-subtle text-warning" style="width: 60px; height: 60px;">
+          <i class="fas {{ b.icon }} fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-1">{{ b.name }}</h5>
+        <span class="badge bg-warning text-dark mb-2">{{ b.min_donations_required }}+ Donations</span>
+        <p class="text-muted small mb-0">{{ b.description }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Top Donors Leaderboard -->
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card shadow p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-trophy text-warning me-2"></i>Top Blood Donors Honor Roll</h4>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Rank</th>
+                <th>Donor Name</th>
+                <th>Blood Group</th>
+                <th>City</th>
+                <th>Total Donations</th>
+                <th>Badges Earned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in top_donors %}
+              <tr>
+                <td>
+                  {% if loop.index == 1 %}
+                    <span class="badge bg-warning text-dark fs-6"><i class="fas fa-crown me-1"></i>#1</span>
+                  {% elif loop.index == 2 %}
+                    <span class="badge bg-secondary text-white fs-6">#2</span>
+                  {% elif loop.index == 3 %}
+                    <span class="badge bg-danger-subtle text-danger fs-6">#3</span>
+                  {% else %}
+                    <span class="fw-bold text-muted">#{{ loop.index }}</span>
+                  {% endif %}
+                </td>
+                <td><a href="{{ url_for('donors.view', id=d.id) }}" class="fw-bold text-dark">{{ d.full_name }}</a></td>
+                <td>{{ macros.blood_badge(d.blood_group.name) }}</td>
+                <td>{{ d.city.name if d.city else 'Pakistan' }}</td>
+                <td><span class="badge bg-danger fs-6">{{ d.total_donations }} Units</span></td>
+                <td>
+                  {% for b in d.badges %}
+                    <i class="fas {{ b.badge.icon }} text-warning" title="{{ b.badge.name }}"></i>
+                  {% endfor %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="text-center text-muted py-3">No ranked donors yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

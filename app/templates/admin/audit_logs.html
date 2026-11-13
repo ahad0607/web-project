@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}System Audit Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-fingerprint text-danger me-2"></i>Database Audit Trail</h3>
+      <p class="text-muted small mb-0">Immutable records of all database entity creations, mutations, and soft deletions</p>
+    </div>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i> Admin Console
+    </a>
+  </div>
+
+  <div class="card shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('admin.audit_logs') }}" class="row g-2 align-items-center">
+      <div class="col-md-6">
+        <input type="text" name="table" class="form-control" placeholder="Filter by table (e.g. patients, donors, blood_units)..." value="{{ table_filter }}">
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filter Table</button>
+      </div>
+      {% if table_filter %}
+      <div class="col-md-3">
+        <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-secondary">Clear Filter</a>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Audit ID</th>
+            <th>Timestamp (UTC)</th>
+            <th>Actor</th>
+            <th>Action</th>
+            <th>Target Table</th>
+            <th>Record ID</th>
+            <th>IP Address</th>
+            <th>Changes (Old &rarr; New)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>#{{ log.id }}</td>
+            <td><small>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small></td>
+            <td>
+              <strong>{{ log.user.full_name if log.user else 'System' }}</strong>
+            </td>
+            <td><span class="badge bg-secondary">{{ log.action }}</span></td>
+            <td><code>{{ log.table_name }}</code></td>
+            <td>#{{ log.record_id }}</td>
+            <td><small class="text-muted">{{ log.ip_address or 'Local' }}</small></td>
+            <td>
+              <small class="text-secondary font-monospace" style="max-width: 300px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Old: {{ log.old_values }} | New: {{ log.new_values }}">
+                {{ log.new_values or log.old_values or '-' }}
+              </small>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-5">No audit log records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ macros.render_pagination(pagination, 'admin.audit_logs') }}
+
+</div>
+{% endblock %}

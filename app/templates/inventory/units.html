@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Blood Units Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-tint text-danger me-2"></i>Blood Units Catalog</h3>
+      <p class="text-muted small mb-0">Track individual bags of PRBC, Platelets, Whole Blood, and FFP</p>
+    </div>
+    {% if current_user and (current_user.is_admin or current_user.is_hospital_staff) %}
+    <a href="{{ url_for('inventory.add_unit') }}" class="btn btn-danger fw-semibold">
+      <i class="fas fa-plus-circle me-1"></i> Add Blood Unit
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('inventory.units') }}" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="Search Unit Number..." value="{{ search }}">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select name="blood_group_id" class="form-select">
+          <option value="">-- All Groups --</option>
+          {% for bg in blood_groups %}
+            <option value="{{ bg.id }}" {% if selected_bg == bg.id %}selected{% endif %}>{{ bg.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="component_type" class="form-select">
+          <option value="">-- Component --</option>
+          <option value="PRBC" {% if selected_component == 'PRBC' %}selected{% endif %}>PRBC (Packed Red Cells)</option>
+          <option value="Whole Blood" {% if selected_component == 'Whole Blood' %}selected{% endif %}>Whole Blood</option>
+          <option value="Platelets" {% if selected_component == 'Platelets' %}selected{% endif %}>Platelets</option>
+          <option value="FFP" {% if selected_component == 'FFP' %}selected{% endif %}>FFP</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">-- Status --</option>
+          <option value="Available" {% if selected_status == 'Available' %}selected{% endif %}>Available</option>
+          <option value="Reserved" {% if selected_status == 'Reserved' %}selected{% endif %}>Reserved</option>
+          <option value="Transfused" {% if selected_status == 'Transfused' %}selected{% endif %}>Transfused</option>
+          <option value="Expired" {% if selected_status == 'Expired' %}selected{% endif %}>Expired</option>
+          <option value="Discarded" {% if selected_status == 'Discarded' %}selected{% endif %}>Discarded</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+        {% if search or selected_bg or selected_component or selected_status %}
+          <a href="{{ url_for('inventory.units') }}" class="btn btn-outline-secondary" title="Reset"><i class="fas fa-undo"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Units Table -->
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Unit #</th>
+            <th>Blood Group</th>
+            <th>Component</th>
+            <th>Volume</th>
+            <th>Storage Location</th>
+            <th>Facility</th>
+            <th>Donation Date</th>
+            <th>Expiry Date</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in units %}
+          <tr>
+            <td><a href="{{ url_for('inventory.view_unit', id=u.id) }}" class="fw-bold text-danger">{{ u.unit_number }}</a></td>
+            <td>{{ macros.blood_badge(u.blood_group.name) }}</td>
+            <td><span class="badge bg-secondary-subtle text-dark">{{ u.component_type }}</span></td>
+            <td>{{ u.volume_ml }} mL</td>
+            <td><small class="text-muted">{{ u.storage_location }}</small></td>
+            <td><small>{{ u.blood_bank.hospital.name if u.blood_bank and u.blood_bank.hospital else 'Main Bank' }}</small></td>
+            <td><small>{{ u.donation_date.strftime('%b %d, %Y') }}</small></td>
+            <td>
+              <small class="fw-bold {% if u.is_expired %}text-danger{% elif u.is_expiring_soon %}text-warning{% endif %}">
+                {{ u.expiry_date.strftime('%b %d, %Y') }}
+              </small>
+            </td>
+            <td>{{ macros.status_badge(u.status) }}</td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('inventory.view_unit', id=u.id) }}" class="btn btn-outline-primary" title="Details"><i class="fas fa-eye"></i></a>
+                {% if current_user and (current_user.is_admin or current_user.is_hospital_staff) %}
+                <a href="{{ url_for('inventory.edit_unit', id=u.id) }}" class="btn btn-outline-secondary" title="Edit/Adjust"><i class="fas fa-edit"></i></a>
+                {% endif %}
+                {% if current_user and current_user.is_admin %}
+                <form action="{{ url_for('inventory.delete_unit', id=u.id) }}" method="POST" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="Soft Delete"><i class="fas fa-trash"></i></button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="10" class="text-center text-muted py-5">
+              <i class="fas fa-tint-slash fs-1 text-secondary mb-2 d-block"></i>
+              No blood units found matching filter criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ macros.render_pagination(pagination, 'inventory.units') }}
+
+</div>
+{% endblock %}

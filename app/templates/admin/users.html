@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-users-cog text-primary me-2"></i>User Account Governance</h3>
+      <p class="text-muted small mb-0">Role assignments, account activation/deactivation, and security statuses</p>
+    </div>
+    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary fw-semibold">
+      <i class="fas fa-user-plus me-1"></i> Create User Account
+    </a>
+  </div>
+
+  <!-- Search & Role Filter -->
+  <div class="card shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('admin.users') }}" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="Search username, email, full name..." value="{{ search }}">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select name="role_id" class="form-select">
+          <option value="">-- All Roles --</option>
+          {% for r in roles %}
+            <option value="{{ r.id }}" {% if selected_role == r.id %}selected{% endif %}>{{ r.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+        {% if search or selected_role %}
+          <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary" title="Reset"><i class="fas fa-undo"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>City</th>
+            <th>Phone</th>
+            <th>Last Login</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div class="fw-bold">{{ u.full_name }}</div>
+              <small class="text-muted">@{{ u.username }}</small>
+            </td>
+            <td>{{ u.email }}</td>
+            <td><span class="badge bg-secondary-subtle text-dark border">{{ u.role_name }}</span></td>
+            <td>{{ u.city.name if u.city else 'Pakistan' }}</td>
+            <td>{{ u.phone }}</td>
+            <td><small>{{ u.last_login_at.strftime('%b %d, %I:%M %p') if u.last_login_at else 'Never' }}</small></td>
+            <td>
+              {% if u.is_active_account %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-danger">Disabled</span>
+              {% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{{ url_for('admin.edit_user', id=u.id) }}" class="btn btn-sm btn-outline-primary me-1" title="Edit User">
+                <i class="fas fa-edit"></i>
+              </a>
+              <form action="{{ url_for('admin.reset_password', id=u.id) }}" method="POST" class="d-inline me-1" onsubmit="return confirm('Reset password for @{{ u.username }} to a random temporary password?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-warning" title="Reset Password">
+                  <i class="fas fa-key"></i>
+                </button>
+              </form>
+              <form action="{{ url_for('admin.toggle_user_status', id=u.id) }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if u.is_active_account %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Deactivate Account"><i class="fas fa-ban"></i></button>
+                {% else %}
+                  <button type="submit" class="btn btn-sm btn-outline-success" title="Activate Account"><i class="fas fa-check"></i></button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-5">No user accounts found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ macros.render_pagination(pagination, 'admin.users') }}
+
+</div>
+{% endblock %}

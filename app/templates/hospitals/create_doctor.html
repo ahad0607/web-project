@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Add Doctor - {{ hospital.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0"><i class="fas fa-user-md text-danger me-2"></i>Add Doctor to {{ hospital.name }}</h4>
+          <a href="{{ url_for('hospitals.view', id=hospital.id) }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('hospitals.create_doctor', id=hospital.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Doctor Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="full_name" class="form-control" placeholder="Tariq Mansoor" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control" placeholder="dr.tariq@hospital.org" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone Number</label>
+              <input type="tel" name="phone" class="form-control" placeholder="0300-1112233">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">PMDC / License No <span class="text-danger">*</span></label>
+              <input type="text" name="license_number" class="form-control" placeholder="PMDC-98765-N" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Specialization</label>
+              <input type="text" name="specialization" class="form-control" value="Pediatric Hematology">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Department</label>
+              <select name="department_id" class="form-select">
+                {% for d in departments %}
+                  <option value="{{ d.id }}">{{ d.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Experience (Years)</label>
+              <input type="number" name="experience_years" class="form-control" value="8">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Consultation Fee (PKR)</label>
+              <input type="number" step="100" name="consultation_fee" class="form-control" value="1500">
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger px-4 fw-semibold">Add Doctor</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

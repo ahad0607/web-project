@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Manage Cities{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row g-4">
+    <div class="col-md-5">
+      <div class="card shadow p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-map-marker-alt text-danger me-2"></i>Add Geographic City</h4>
+        <form method="POST" action="{{ url_for('admin.cities') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">City Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Karachi" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">State / Province</label>
+            <input type="text" name="state_province" class="form-control" placeholder="Sindh">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Postal Code</label>
+            <input type="text" name="postal_code" class="form-control" placeholder="75270">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Country</label>
+            <input type="text" name="country" class="form-control" value="Pakistan">
+          </div>
+          <button type="submit" class="btn btn-danger w-100 fw-semibold">Save City</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card shadow p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-list text-primary me-2"></i>Registered Cities</h4>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>City</th>
+                <th>Province</th>
+                <th>Postal Code</th>
+                <th>Areas Registered</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in cities %}
+              <tr>
+                <td><strong>{{ c.name }}</strong></td>
+                <td>{{ c.state_province or '-' }}</td>
+                <td>{{ c.postal_code or '-' }}</td>
+                <td><span class="badge bg-secondary">{{ c.areas|length }} Areas</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center text-muted py-3">No cities defined.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

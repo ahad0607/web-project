@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Transfusion Clinical Records{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-file-medical-alt text-danger me-2"></i>Completed Transfusion Records</h3>
+      <p class="text-muted small mb-0">Audited clinical transfusion execution reports and post-infusion hemoglobin increments</p>
+    </div>
+    <a href="{{ url_for('transfusions.schedules') }}" class="btn btn-outline-danger">
+      <i class="fas fa-calendar-alt me-1"></i> View Transfusion Schedules
+    </a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Patient (MRN)</th>
+            <th>Blood Unit Used</th>
+            <th>Hospital & Doctor</th>
+            <th>Pre &rarr; Post Hb</th>
+            <th>Net Gain</th>
+            <th>Adverse Reaction</th>
+            <th>Infusion Times</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td><strong>{{ r.transfusion_date.strftime('%b %d, %Y') }}</strong></td>
+            <td>
+              <a href="{{ url_for('patients.view', id=r.patient.id) }}" class="fw-bold text-dark text-decoration-none">
+                {{ r.patient.full_name }}
+              </a>
+              <div class="text-muted small">MRN: {{ r.patient.mrn }}</div>
+            </td>
+            <td>
+              <span class="badge bg-secondary-subtle text-dark border">
+                {{ r.blood_unit.unit_number if r.blood_unit else 'Unit' }} ({{ r.blood_unit.blood_group.name if r.blood_unit and r.blood_unit.blood_group else '' }})
+              </span>
+            </td>
+            <td>
+              <div class="small fw-semibold">{{ r.hospital.name if r.hospital else 'Main Hospital' }}</div>
+              <small class="text-muted">{{ r.doctor.full_name if r.doctor else 'Supervising Staff' }}</small>
+            </td>
+            <td>
+              <span class="text-muted">{{ r.pre_transfusion_hb }}</span> &rarr;
+              <strong class="text-success">{{ r.post_transfusion_hb }} g/dL</strong>
+            </td>
+            <td>
+              <span class="badge bg-success-subtle text-success border border-success fw-bold">
+                +{{ r.hb_gain }} g/dL
+              </span>
+            </td>
+            <td>
+              {% if r.adverse_reaction_observed %}
+                <span class="badge bg-danger" title="{{ r.reaction_details }}"><i class="fas fa-exclamation-triangle me-1"></i>Yes</span>
+              {% else %}
+                <span class="badge bg-success-subtle text-success border"><i class="fas fa-check me-1"></i>None</span>
+              {% endif %}
+            </td>
+            <td><small class="text-muted">{{ r.start_time }} - {{ r.end_time }}</small></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">
+              <i class="fas fa-notes-medical fs-1 text-secondary mb-2 d-block"></i>
+              No completed transfusion records found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ macros.render_pagination(pagination, 'transfusions.records') }}
+
+</div>
+{% endblock %}

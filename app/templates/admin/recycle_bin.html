@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Recycle Bin & Soft-Delete Restore{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-trash-restore text-danger me-2"></i>Recycle Bin & Data Recovery</h3>
+      <p class="text-muted small mb-0">Audit-compliant soft-deleted records across all entities with one-click restore</p>
+    </div>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i> Admin Home
+    </a>
+  </div>
+
+  <!-- Nav Tabs -->
+  <ul class="nav nav-pills mb-3" id="recycleTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" id="users-tab" data-bs-toggle="pill" data-bs-target="#tab-users" type="button">
+        Users ({{ deleted.users|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="patients-tab" data-bs-toggle="pill" data-bs-target="#tab-patients" type="button">
+        Patients ({{ deleted.patients|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="donors-tab" data-bs-toggle="pill" data-bs-target="#tab-donors" type="button">
+        Donors ({{ deleted.donors|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="units-tab" data-bs-toggle="pill" data-bs-target="#tab-units" type="button">
+        Blood Units ({{ deleted.units|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="hospitals-tab" data-bs-toggle="pill" data-bs-target="#tab-hospitals" type="button">
+        Hospitals ({{ deleted.hospitals|length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="requests-tab" data-bs-toggle="pill" data-bs-target="#tab-requests" type="button">
+        Requests ({{ deleted.requests|length }})
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="recycleTabContent">
+    
+    <!-- USERS TAB -->
+    <div class="tab-pane fade show active" id="tab-users" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Deleted At</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in deleted.users %}
+              <tr>
+                <td>#{{ u.id }}</td>
+                <td class="fw-bold">{{ u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.updated_at.strftime('%Y-%m-%d %H:%M') if u.updated_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.restore_record', entity_type='user', id=u.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-undo me-1"></i> Restore
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center py-4 text-muted">No deleted users.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENTS TAB -->
+    <div class="tab-pane fade" id="tab-patients" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>MRN</th>
+                <th>Name</th>
+                <th>Deleted At</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in deleted.patients %}
+              <tr>
+                <td><strong>{{ p.mrn }}</strong></td>
+                <td>{{ p.full_name }}</td>
+                <td>{{ p.updated_at.strftime('%Y-%m-%d %H:%M') if p.updated_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.restore_record', entity_type='patient', id=p.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-undo me-1"></i> Restore
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center py-4 text-muted">No deleted patients.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DONORS TAB -->
+    <div class="tab-pane fade" id="tab-donors" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Donor Name</th>
+                <th>Blood Group</th>
+                <th>Deleted At</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in deleted.donors %}
+              <tr>
+                <td><strong>{{ d.full_name }}</strong></td>
+                <td>{{ d.blood_group.name if d.blood_group else 'N/A' }}</td>
+                <td>{{ d.updated_at.strftime('%Y-%m-%d %H:%M') if d.updated_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.restore_record', entity_type='donor', id=d.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-undo me-1"></i> Restore
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center py-4 text-muted">No deleted donors.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOOD UNITS TAB -->
+    <div class="tab-pane fade" id="tab-units" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Unit #</th>
+                <th>Group</th>
+                <th>Deleted At</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in deleted.units %}
+              <tr>
+                <td><code>{{ u.unit_number }}</code></td>
+                <td>{{ u.blood_group.name if u.blood_group else '' }}</td>
+                <td>{{ u.updated_at.strftime('%Y-%m-%d %H:%M') if u.updated_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.restore_record', entity_type='unit', id=u.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-undo me-1"></i> Restore
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center py-4 text-muted">No deleted blood units.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOSPITALS TAB -->
+    <div class="tab-pane fade" id="tab-hospitals" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Hospital Name</th>
+                <th>City</th>
+                <th>Deleted At</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in deleted.hospitals %}
+              <tr>
+                <td class="fw-bold">{{ h.name }}</td>
+                <td>{{ h.city.name if h.city else '' }}</td>
+                <td>{{ h.updated_at.strftime('%Y-%m-%d %H:%M') if h.updated_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.restore_record', entity_type='hospital', id=h.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-undo me-1"></i> Restore
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center py-4 text-muted">No deleted hospitals.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- REQUESTS TAB -->
+    <div class="tab-pane fade" id="tab-requests" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Request ID</th>
+                <th>Hospital</th>
+                <th>Units</th>
+                <th>Deleted At</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in deleted.requests %}
+              <tr>
+                <td>#{{ r.id }}</td>
+                <td>{{ r.hospital.name if r.hospital else '' }}</td>
+                <td>{{ r.units_requested }} units</td>
+                <td>{{ r.updated_at.strftime('%Y-%m-%d %H:%M') if r.updated_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <form action="{{ url_for('admin.restore_record', entity_type='request', id=r.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-undo me-1"></i> Restore
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center py-4 text-muted">No deleted requests.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

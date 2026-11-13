@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}System Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-shield-alt text-info me-2"></i>System Administration Console</h3>
+      <p class="text-muted small mb-0">Platform governance, user accounts, security logs, and reference master data</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-users-cog me-1"></i> User Accounts
+      </a>
+      <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-danger btn-sm">
+        <i class="fas fa-fingerprint me-1"></i> Audit Trail
+      </a>
+      <a href="{{ url_for('admin.login_logs') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-sign-in-alt me-1"></i> Security Logs
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Badges Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card shadow-sm p-3 text-center border-primary">
+        <div class="text-muted small">Total Users</div>
+        <h3 class="fw-bold text-primary mb-0 mt-1">{{ stats.users_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card shadow-sm p-3 text-center border-danger">
+        <div class="text-muted small">Patients</div>
+        <h3 class="fw-bold text-danger mb-0 mt-1">{{ stats.patients_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card shadow-sm p-3 text-center border-success">
+        <div class="text-muted small">Donors</div>
+        <h3 class="fw-bold text-success mb-0 mt-1">{{ stats.donors_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card shadow-sm p-3 text-center border-info">
+        <div class="text-muted small">Hospitals</div>
+        <h3 class="fw-bold text-info mb-0 mt-1">{{ stats.hospitals_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card shadow-sm p-3 text-center border-warning">
+        <div class="text-muted small">Blood Bags</div>
+        <h3 class="fw-bold text-warning mb-0 mt-1">{{ stats.units_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card shadow-sm p-3 text-center border-secondary">
+        <div class="text-muted small">Total Requests</div>
+        <h3 class="fw-bold text-secondary mb-0 mt-1">{{ stats.requests_count }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent Audit Logs -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="fas fa-fingerprint text-danger me-2"></i>Recent Entity Mutations (Audit Log)</h5>
+          <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-danger btn-sm">Full Audit Trail</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Time</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Table</th>
+                <th>Record ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in recent_audits %}
+              <tr>
+                <td><small>{{ a.created_at.strftime('%H:%M:%S') }}</small></td>
+                <td><small class="fw-semibold">{{ a.user.full_name if a.user else 'System' }}</small></td>
+                <td><span class="badge bg-secondary">{{ a.action }}</span></td>
+                <td><code>{{ a.table_name }}</code></td>
+                <td>#{{ a.record_id }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No audit trails recorded.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Security Login Logs -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="fas fa-shield-alt text-info me-2"></i>Authentication Attempts</h5>
+          <a href="{{ url_for('admin.login_logs') }}" class="btn btn-outline-secondary btn-sm">All Logins</a>
+        </div>
+        <ul class="list-group list-group-flush small">
+          {% for log in recent_logins %}
+          <li class="list-group-item px-0 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span><strong>{{ log.user.username if log.user else 'Unknown IP' }}</strong> ({{ log.ip_address }})</span>
+              <span class="badge bg-{{ 'success' if log.login_status == 'SUCCESS' else 'danger' }}">{{ log.login_status }}</span>
+            </div>
+            <div class="text-muted" style="font-size: 0.75rem;">
+              {{ log.created_at.strftime('%b %d, %I:%M %p') }} &bull; {{ log.failure_reason or 'Authorized entry' }}
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-3">No login logs recorded.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

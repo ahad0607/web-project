@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Thalassemia Patients{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-user-injured text-danger me-2"></i>Thalassemia Patients Registry</h3>
+      <p class="text-muted small mb-0">Manage chronic transfusion care, clinical histories, and hemoglobin/ferritin records</p>
+    </div>
+    {% if current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+    <a href="{{ url_for('patients.create') }}" class="btn btn-danger fw-semibold">
+      <i class="fas fa-user-plus me-1"></i> Register New Patient
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('patients.index') }}" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="Search MRN, Name, Phone..." value="{{ search }}">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="blood_group_id" class="form-select">
+          <option value="">-- All Blood Groups --</option>
+          {% for bg in blood_groups %}
+            <option value="{{ bg.id }}" {% if selected_bg == bg.id %}selected{% endif %}>{{ bg.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="city_id" class="form-select">
+          <option value="">-- All Cities --</option>
+          {% for c in cities %}
+            <option value="{{ c.id }}" {% if selected_city == c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+        {% if search or selected_bg or selected_city %}
+          <a href="{{ url_for('patients.index') }}" class="btn btn-outline-secondary" title="Clear Filters"><i class="fas fa-undo"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Patients Table -->
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>MRN</th>
+            <th>Patient Name</th>
+            <th>Blood Group</th>
+            <th>Age / Gender</th>
+            <th>Primary Hospital</th>
+            <th>Baseline Hb</th>
+            <th>Transfusion Cycle</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in patients %}
+          <tr>
+            <td><a href="{{ url_for('patients.view', id=p.id) }}" class="fw-bold text-danger">{{ p.mrn }}</a></td>
+            <td>
+              <div class="fw-semibold">{{ p.full_name }}</div>
+              <small class="text-muted">{{ p.user.phone if p.user else '' }}</small>
+            </td>
+            <td>{{ macros.blood_badge(p.blood_group.name) }}</td>
+            <td>{{ p.age }} yrs / {{ p.gender }}</td>
+            <td>{{ p.primary_hospital.name if p.primary_hospital else 'Not Assigned' }}</td>
+            <td><span class="badge bg-secondary-subtle text-dark border">{{ p.baseline_hemoglobin }} g/dL</span></td>
+            <td>Every {{ p.transfusion_interval_days }} days</td>
+            <td>{{ macros.status_badge(p.status) }}</td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('patients.view', id=p.id) }}" class="btn btn-outline-primary" title="Clinical View"><i class="fas fa-eye"></i></a>
+                {% if current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+                <a href="{{ url_for('patients.edit', id=p.id) }}" class="btn btn-outline-secondary" title="Edit Patient"><i class="fas fa-edit"></i></a>
+                {% endif %}
+                {% if current_user and current_user.is_admin %}
+                <form action="{{ url_for('patients.delete', id=p.id) }}" method="POST" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="Soft Delete"><i class="fas fa-trash"></i></button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="text-center text-muted py-5">
+              <i class="fas fa-user-slash fs-1 text-secondary mb-2 d-block"></i>
+              No thalassemia patients found matching the selected criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Reusable Pagination Macro -->
+  {{ macros.render_pagination(pagination, 'patients.index') }}
+
+</div>
+{% endblock %}

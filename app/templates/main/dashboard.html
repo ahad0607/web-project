@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  
+  <!-- Hero / SOS Alert Banner if any active emergencies -->
+  {% if active_emergencies_count > 0 %}
+  <div class="alert alert-danger shadow-sm border-danger d-flex align-items-center justify-content-between p-3 mb-4 rounded-3" role="alert">
+    <div class="d-flex align-items-center">
+      <div class="fs-1 text-danger me-3 animate-pulse">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div>
+        <h5 class="alert-heading fw-bold mb-1">🚨 Critical Blood Emergencies Active!</h5>
+        <p class="mb-0">There are <strong>{{ active_emergencies_count }}</strong> live emergency blood broadcasts in progress. Donors needed urgently!</p>
+      </div>
+    </div>
+    <a href="{{ url_for('requests.emergency_active') }}" class="btn btn-danger fw-bold shadow-sm">
+      <i class="fas fa-broadcast-tower me-1"></i> View Live SOS
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Global Metrics Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card metric-card shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-semibold">Thalassemia Patients</span>
+            <h2 class="fw-bold mb-0 mt-1">{{ total_patients }}</h2>
+          </div>
+          <div class="avatar-circle bg-danger-subtle text-danger">
+            <i class="fas fa-user-injured fs-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 small text-muted">
+          <a href="{{ url_for('patients.index') }}" class="text-decoration-none text-danger fw-semibold">View Registry <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card metric-card shadow-sm h-100 p-3" style="border-left-color: #2e7d32;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-semibold">Active Donors</span>
+            <h2 class="fw-bold mb-0 mt-1">{{ total_donors }}</h2>
+          </div>
+          <div class="avatar-circle bg-success-subtle text-success">
+            <i class="fas fa-hand-holding-heart fs-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 small text-muted">
+          <a href="{{ url_for('donors.index') }}" class="text-decoration-none text-success fw-semibold">Explore Donors <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card metric-card shadow-sm h-100 p-3" style="border-left-color: #0288d1;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-semibold">Available Blood Units</span>
+            <h2 class="fw-bold mb-0 mt-1">{{ total_units_available }}</h2>
+          </div>
+          <div class="avatar-circle bg-info-subtle text-info">
+            <i class="fas fa-tint fs-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 small text-muted">
+          <a href="{{ url_for('inventory.index') }}" class="text-decoration-none text-info fw-semibold">Check Inventory <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card metric-card shadow-sm h-100 p-3" style="border-left-color: #ed6c02;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-semibold">Active SOS Emergencies</span>
+            <h2 class="fw-bold mb-0 mt-1 text-danger">{{ active_emergencies_count }}</h2>
+          </div>
+          <div class="avatar-circle bg-warning-subtle text-warning">
+            <i class="fas fa-bullhorn fs-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 small text-muted">
+          <a href="{{ url_for('requests.emergency_active') }}" class="text-decoration-none text-danger fw-semibold">Live Monitor <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Role-Customized Section -->
+  {% if current_user and current_user.is_admin %}
+    <!-- ADMIN VIEW -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-7">
+        <div class="card shadow-sm p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="fas fa-clipboard-list text-danger me-2"></i>Recent Blood Requests</h5>
+            <a href="{{ url_for('requests.index') }}" class="btn btn-sm btn-outline-danger">View All</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Req #</th>
+                  <th>Patient / Hospital</th>
+                  <th>Group</th>
+                  <th>Units</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in role_data.recent_requests %}
+                <tr>
+                  <td><a href="{{ url_for('requests.view', id=r.id) }}" class="fw-bold">#{{ r.id }}</a></td>
+                  <td>
+                    <div class="fw-semibold">{{ r.patient.full_name if r.patient else 'Emergency Hospital Pool' }}</div>
+                    <small class="text-muted">{{ r.hospital.name }}</small>
+                  </td>
+                  <td>{{ macros.blood_badge(r.blood_group.name) }}</td>
+                  <td>{{ r.units_fulfilled }} / {{ r.units_requested }}</td>
+                  <td>{{ macros.status_badge(r.urgency) }}</td>
+                  <td>{{ macros.status_badge(r.status) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-3">No recent requests recorded.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card shadow-sm p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="fas fa-fingerprint text-danger me-2"></i>Live Audit Activity</h5>
+            <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-sm btn-outline-secondary">All Logs</a>
+          </div>
+          <ul class="list-group list-group-flush small">
+            {% for log in role_data.recent_logs %}
+            <li class="list-group-item px-0 py-2">
+              <div class="d-flex justify-content-between">
+                <span class="badge bg-secondary me-1">{{ log.action }}</span>
+                <span class="text-muted small">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+              </div>
+              <div class="mt-1">
+                <strong>{{ log.user.full_name if log.user else 'System' }}</strong> modified <code>{{ log.table_name }}</code> (Record #{{ log.record_id }})
+              </div>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted text-center py-3">No recent audit trails.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  {% elif current_user and current_user.is_doctor %}
+    <!-- DOCTOR VIEW -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="card shadow-sm p-4 h-100">
+          <h5 class="fw-bold mb-3"><i class="fas fa-stethoscope text-primary me-2"></i>Today's Clinic Consultations</h5>
+          <ul class="list-group list-group-flush">
+            {% for appt in role_data.today_appointments %}
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <div>
+                <h6 class="mb-0 fw-bold">{{ appt.patient.full_name }}</h6>
+                <small class="text-muted">{{ appt.time_slot }} - {{ appt.reason }}</small>
+              </div>
+              {{ macros.status_badge(appt.status) }}
+            </li>
+            {% else %}
+            <p class="text-muted text-center py-4 mb-0">No consultations scheduled for today.</p>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm p-4 h-100">
+          <h5 class="fw-bold mb-3"><i class="fas fa-calendar-check text-danger me-2"></i>Upcoming Transfusions (Your Patients)</h5>
+          <ul class="list-group list-group-flush">
+            {% for sched in role_data.upcoming_transfusions %}
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <div>
+                <h6 class="mb-0 fw-bold">{{ sched.patient.full_name }} (MRN: {{ sched.patient.mrn }})</h6>
+                <small class="text-muted">Due Date: {{ sched.scheduled_date.strftime('%B %d, %Y') }} ({{ sched.required_units }} Unit)</small>
+              </div>
+              <a href="{{ url_for('transfusions.execute', id=sched.id) }}" class="btn btn-sm btn-outline-danger">Execute</a>
+            </li>
+            {% else %}
+            <p class="text-muted text-center py-4 mb-0">No upcoming transfusions found.</p>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  {% elif current_user and current_user.is_patient and role_data.patient %}
+    <!-- PATIENT VIEW -->
+    {% set p = role_data.patient %}
+    <div class="card shadow-sm p-4 mb-4 border-danger">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3 text-center border-end">
+          <div class="avatar-circle mx-auto mb-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            {{ p.full_name[:1]|upper }}
+          </div>
+          <h5 class="fw-bold mb-0">{{ p.full_name }}</h5>
+          <p class="text-muted small mb-1">MRN: <strong>{{ p.mrn }}</strong></p>
+          {{ macros.blood_badge(p.blood_group.name) }}
+        </div>
+
+        <div class="col-md-3 text-center border-end">
+          <span class="text-muted small">Next Scheduled Transfusion</span>
+          {% if role_data.next_schedule %}
+            <h4 class="fw-bold text-danger mt-1 mb-0">{{ role_data.next_schedule.scheduled_date.strftime('%b %d, %Y') }}</h4>
+            <small class="text-muted">Every {{ p.transfusion_interval_days }} days interval</small>
+          {% else %}
+            <h5 class="text-muted mt-2">None Booked</h5>
+            <a href="{{ url_for('transfusions.create_schedule') }}" class="btn btn-sm btn-outline-danger mt-1">Book Now</a>
+          {% endif %}
+        </div>
+
+        <div class="col-md-3 text-center border-end">
+          <span class="text-muted small">Latest Lab Readings</span>
+          <div class="mt-1">
+            <span class="fw-bold fs-5 text-primary">Hb: {{ role_data.latest_hb.hb_level if role_data.latest_hb else p.baseline_hemoglobin }} g/dL</span>
+          </div>
+          <div>
+            <span class="fw-bold fs-6 text-warning">Ferritin: {{ role_data.latest_ferritin.ferritin_level if role_data.latest_ferritin else 'N/A' }} ng/mL</span>
+          </div>
+        </div>
+
+        <div class="col-md-3 text-center">
+          <a href="{{ url_for('patients.view', id=p.id) }}" class="btn btn-danger w-100 mb-2">
+            <i class="fas fa-file-medical me-1"></i> Full Clinical Chart
+          </a>
+          <a href="{{ url_for('care.appointments') }}" class="btn btn-outline-secondary w-100 btn-sm">
+            <i class="fas fa-calendar-alt me-1"></i> My Appointments
+          </a>
+        </div>
+      </div>
+    </div>
+
+  {% elif current_user and current_user.is_donor and role_data.donor %}
+    <!-- DONOR VIEW -->
+    {% set d = role_data.donor %}
+    <div class="card shadow-sm p-4 mb-4 border-success">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3 text-center border-end">
+          <div class="avatar-circle mx-auto mb-2 bg-success-subtle text-success" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            {{ d.full_name[:1]|upper }}
+          </div>
+          <h5 class="fw-bold mb-0">{{ d.full_name }}</h5>
+          <div class="mt-1">{{ macros.blood_badge(d.blood_group.name) }}</div>
+        </div>
+
+        <div class="col-md-3 text-center border-end">
+          <span class="text-muted small">Lifetime Donations</span>
+          <h2 class="fw-bold text-success mb-0 mt-1">{{ d.total_donations }}</h2>
+          <small class="text-muted">Lives Impacted: ~{{ d.total_donations * 3 }}</small>
+        </div>
+
+        <div class="col-md-3 text-center border-end">
+          <span class="text-muted small">Current Eligibility</span>
+          <div class="mt-1">
+            {% if d.is_eligible_to_donate %}
+              <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>Eligible Now</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6"><i class="fas fa-clock me-1"></i>Next: {{ d.next_eligible_date.strftime('%b %d') }}</span>
+            {% endif %}
+          </div>
+          <div class="mt-2 small text-muted">
+            Emergency Availability: <strong>{{ 'Enabled' if d.availability and d.availability.is_available_for_emergency else 'Off' }}</strong>
+          </div>
+        </div>
+
+        <div class="col-md-3 text-center">
+          <a href="{{ url_for('donors.emergency_matches') }}" class="btn btn-danger w-100 mb-2">
+            <i class="fas fa-bell me-1"></i> Check Emergency Matches
+          </a>
+          <a href="{{ url_for('donors.badges_view') }}" class="btn btn-outline-warning w-100 btn-sm text-dark">
+            <i class="fas fa-award me-1"></i> My Badges ({{ role_data.earned_badges|length }})
+          </a>
+        </div>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- PUBLIC / GUEST HERO CALLOUT -->
+    <div class="p-4 p-md-5 mb-4 rounded-3 bg-body-tertiary shadow-sm">
+      <div class="container-fluid py-2">
+        <h1 class="display-6 fw-bold text-danger"><i class="fas fa-heartbeat me-2"></i>Bridge the Gap. Save Thalassemia Lives.</h1>
+        <p class="col-md-8 fs-5 text-muted">
+          Thalassemia major warriors depend on regular blood transfusions every 2 to 4 weeks to survive.
+          LifeBridge coordinates long-term chronic treatment, real-time emergency matching, and verified blood banking in Pakistan.
+        </p>
+        <div class="d-flex gap-3">
+          <a href="{{ url_for('donors.register') }}" class="btn btn-danger btn-lg px-4 fw-semibold">
+            <i class="fas fa-hand-holding-heart me-2"></i>Become a Blood Donor
+          </a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-outline-secondary btn-lg px-4">
+            <i class="fas fa-user-injured me-2"></i>Register Patient
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Active Campaigns Preview -->
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0"><i class="fas fa-flag text-danger me-2"></i>Active & Upcoming Blood Drives</h4>
+        <a href="{{ url_for('campaigns.index') }}" class="btn btn-outline-danger btn-sm">View All Campaigns</a>
+      </div>
+    </div>
+
+    {% for camp in recent_campaigns %}
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="fw-bold mb-0">{{ camp.title }}</h5>
+          {{ macros.status_badge(camp.status) }}
+        </div>
+        <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ camp.venue }}, {{ camp.city.name if camp.city else '' }}</p>
+        <p class="small text-secondary mb-3">{{ camp.description[:120] }}...</p>
+
+        <div class="mt-auto">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>Collected: <strong>{{ camp.collected_units }}</strong></span>
+            <span>Target: <strong>{{ camp.target_units }}</strong> Units</span>
+          </div>
+          <div class="progress mb-3" style="height: 8px;">
+            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ camp.progress_percentage }}%;"></div>
+          </div>
+          <a href="{{ url_for('campaigns.view', id=camp.id) }}" class="btn btn-outline-danger btn-sm w-100">
+            View Drive Details & Join
+          </a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="card p-4 text-center text-muted shadow-sm">
+        No active blood donation drives currently listed.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

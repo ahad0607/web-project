@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}About LifeBridge{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card shadow p-4 p-md-5">
+        <h2 class="fw-bold text-danger mb-3"><i class="fas fa-heartbeat me-2"></i>About LifeBridge</h2>
+        <p class="lead text-secondary">
+          LifeBridge: Blood Donation & Thalassemia Care Management System is an integrated healthcare platform designed to solve two deeply interlinked crises: acute emergency blood shortages and chronic thalassemia transfusion management.
+        </p>
+
+        <hr class="my-4">
+
+        <h4 class="fw-bold text-dark mb-3">Understanding Thalassemia in Pakistan</h4>
+        <p class="text-secondary">
+          Pakistan carries one of the highest burdens of Beta Thalassemia Major worldwide, with an estimated 5,000–9,000 children born with the disorder each year. Due to severe genetic defects in hemoglobin synthesis, these children suffer from profound life-threatening anemia and require:
+        </p>
+        <ul class="text-secondary">
+          <li><strong>Regular Blood Transfusions:</strong> Typically every 2 to 4 weeks throughout life to sustain minimum hemoglobin levels (>9.5 g/dL).</li>
+          <li><strong>Iron Overload & Chelation Monitoring:</strong> Each transfusion deposits iron that the human body cannot excrete naturally. Continuous serum ferritin tracking and daily iron chelation therapies (such as Deferasirox) are essential to prevent fatal cardiac and endocrine failure.</li>
+          <li><strong>Emergency Donor Shortages:</strong> Unplanned blood shortages often delay scheduled transfusions, causing irreversible pediatric organ damage.</li>
+        </ul>
+
+        <hr class="my-4">
+
+        <h4 class="fw-bold text-dark mb-3">Core Pillars of LifeBridge</h4>
+        <div class="row g-4 mt-1">
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 h-100 bg-body-tertiary">
+              <h5 class="fw-bold text-danger"><i class="fas fa-broadcast-tower me-2"></i>Automated Emergency SOS</h5>
+              <p class="small text-muted mb-0">Algorithmic matching of compatible, eligible blood donors within locality and instant notification dispatch.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 h-100 bg-body-tertiary">
+              <h5 class="fw-bold text-primary"><i class="fas fa-calendar-check me-2"></i>Thalassemia Transfusion Cycles</h5>
+              <p class="small text-muted mb-0">Automated 2-4 week recurring schedule calculator, linked blood requisitioning, and pre/post transfusion lab tracking.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 h-100 bg-body-tertiary">
+              <h5 class="fw-bold text-success"><i class="fas fa-warehouse me-2"></i>Cold-Chain Blood Bank Inventory</h5>
+              <p class="small text-muted mb-0">Unit-by-unit bag tracking (PRBC, Platelets, FFP), expiration warnings, and stock transfer ledgers.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 h-100 bg-body-tertiary">
+              <h5 class="fw-bold text-warning"><i class="fas fa-award me-2"></i>Gamified Donor Retention</h5>
+              <p class="small text-muted mb-0">Dynamic milestone badges, 90-day cooldown enforcement, and university donation drives.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 p-3 rounded-3 bg-danger-subtle text-danger border border-danger">
+          <strong>Course Academic Accreditation:</strong> CSE601330 Web Engineering Course Capstone Project. Built using Python Flask, SQLAlchemy ORM, SQLite, Bootstrap 5, and Jinja2 templates.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

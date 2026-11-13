@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}{{ campaign.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header Card -->
+  <div class="card shadow p-4 mb-4 border-danger">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <h3 class="fw-bold mb-0 text-danger">{{ campaign.title }}</h3>
+          {{ macros.status_badge(campaign.status) }}
+        </div>
+        <p class="text-muted small mb-1">
+          <i class="fas fa-map-marker-alt text-danger me-1"></i> Venue: <strong>{{ campaign.venue }}</strong>, {{ campaign.city.name if campaign.city else 'Pakistan' }} &bull;
+          <i class="fas fa-hospital me-1"></i> Hospital Partner: <strong>{{ campaign.hospital.name }}</strong>
+        </p>
+        <p class="text-secondary small mb-0">
+          <i class="fas fa-calendar-alt me-1 text-muted"></i> {{ campaign.start_date.strftime('%B %d, %Y') }} to {{ campaign.end_date.strftime('%B %d, %Y') }}
+        </p>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#joinCampaignModal">
+          <i class="fas fa-user-plus me-1"></i> Join Drive (Donor/Volunteer)
+        </button>
+        {% if current_user and (current_user.is_admin or current_user.is_hospital_staff) %}
+        <button class="btn btn-outline-success btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#recordDonationModal">
+          <i class="fas fa-tint me-1"></i> Record Collected Blood
+        </button>
+        <a href="{{ url_for('campaigns.edit', id=campaign.id) }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-edit me-1"></i> Edit
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mt-4 pt-3 border-top">
+      <div class="d-flex justify-content-between small text-muted mb-1">
+        <span>Collected: <strong class="fs-6 text-danger">{{ campaign.collected_units }}</strong> Bags</span>
+        <span>Goal: <strong class="fs-6 text-dark">{{ campaign.target_units }}</strong> Bags</span>
+      </div>
+      <div class="progress" style="height: 18px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger fw-bold" role="progressbar" style="width: {{ campaign.progress_percentage }}%;">
+          {{ campaign.progress_percentage }}% Completed
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Participants -->
+    <div class="col-lg-6">
+      <div class="card shadow p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="fas fa-users text-primary me-2"></i>Registered Participants & Volunteers</h5>
+        <ul class="list-group list-group-flush small">
+          {% for p in participants %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+              <strong>{{ p.user.full_name }}</strong>
+              <div class="text-muted small">{{ p.user.phone }}</div>
+            </div>
+            <span class="badge bg-primary-subtle text-primary border border-primary">{{ p.role_in_campaign }}</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-4">No participants registered yet. Be the first to join!</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Collected Donations -->
+    <div class="col-lg-6">
+      <div class="card shadow p-4 h-100">
+        <h5 class="fw-bold mb-3 text-danger"><i class="fas fa-tint me-2"></i>Live Donations Collected at Venue</h5>
+        <ul class="list-group list-group-flush small">
+          {% for d in donations %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+              <strong>{{ d.donor.full_name }}</strong>
+              <div class="text-muted">{{ d.volume_ml }} mL on {{ d.donation_date.strftime('%b %d') }}</div>
+            </div>
+            {{ macros.blood_badge(d.blood_group.name if d.blood_group else '') }}
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-4">No blood bags logged yet today.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Join Campaign -->
+<div class="modal fade" id="joinCampaignModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('campaigns.join', id=campaign.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Register for {{ campaign.title }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Participation Role</label>
+            <select name="role" class="form-select" required>
+              <option value="Donor">Blood Donor (Pledging to Donate)</option>
+              <option value="Volunteer">Student Volunteer / Drive Coordinator</option>
+              <option value="Organizer">Organizer Staff</option>
+            </select>
+          </div>
+          <p class="small text-muted mb-0">
+            Venue: {{ campaign.venue }}. Please bring your CNIC or University Student ID card on the drive date.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Confirm Registration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Record Donation -->
+<div class="modal fade" id="recordDonationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('campaigns.record_donation', id=campaign.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-danger">Record Drive Blood Collection</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Donor <span class="text-danger">*</span></label>
+            <select name="donor_id" class="form-select" required>
+              <option value="">-- Select Registered Donor --</option>
+              {% for d in donors %}
+                <option value="{{ d.id }}">{{ d.full_name }} ({{ d.blood_group.name }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Blood Group</label>
+            <select name="blood_group_id" class="form-select">
+              {% for bg in blood_groups %}
+                <option value="{{ bg.id }}">{{ bg.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Volume (mL)</label>
+            <input type="number" name="volume_ml" class="form-control" value="450">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Log Bag to Inventory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

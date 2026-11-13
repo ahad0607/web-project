@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Register as Blood Donor{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow p-4">
+        <div class="text-center mb-4">
+          <i class="fas fa-hand-holding-heart text-danger fs-1 mb-2"></i>
+          <h3 class="fw-bold">Become a LifeBridge Blood Donor</h3>
+          <p class="text-muted small">Your blood donation directly saves children suffering from Thalassemia Major</p>
+        </div>
+
+        <div class="alert alert-info py-2 small mb-4">
+          <i class="fas fa-info-circle me-1"></i> <strong>Eligibility Criteria:</strong> Donors must be between <strong>18 and 60 years old</strong>, weigh at least <strong>50 kg</strong>, and observe a mandatory <strong>90-day cooldown</strong> between whole blood donations.
+        </div>
+
+        <form method="POST" action="{{ url_for('donors.register') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="full_name" class="form-control" placeholder="Hamza Ali" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control" placeholder="hamza@example.com" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+              <input type="tel" name="phone" class="form-control" placeholder="0300-1234567" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">CNIC / ID Card</label>
+              <input type="text" name="cnic" class="form-control" placeholder="42101-XXXXXXX-X">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Date of Birth <span class="text-danger">*</span></label>
+              <input type="date" name="date_of_birth" class="form-control" required>
+              <div class="form-text small">Must be 18–60 years old</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+              <select name="gender" class="form-select" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Blood Group <span class="text-danger">*</span></label>
+              <select name="blood_group_id" class="form-select" required>
+                <option value="">-- Choose Group --</option>
+                {% for bg in blood_groups %}
+                  <option value="{{ bg.id }}">{{ bg.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Weight (kg) <span class="text-danger">*</span></label>
+              <input type="number" step="0.5" name="weight_kg" class="form-control" value="65.0" min="50" required>
+              <div class="form-text small">Minimum 50 kg required for safe donation</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">City <span class="text-danger">*</span></label>
+              <select name="city_id" class="form-select" required>
+                <option value="">-- Select City --</option>
+                {% for c in cities %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Preferred Donation Hospital / Blood Bank</label>
+              <select name="preferred_donation_center_id" class="form-select">
+                <option value="">-- Choose Preferred Hospital --</option>
+                {% for h in hospitals %}
+                  <option value="{{ h.id }}">{{ h.name }} ({{ h.city.name if h.city else '' }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Account Password <span class="text-danger">*</span></label>
+              <input type="password" name="password" class="form-control" minlength="6" placeholder="Min. 6 chars" required>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold">
+              <i class="fas fa-heart me-1"></i> Register as Voluntary Life Saver
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

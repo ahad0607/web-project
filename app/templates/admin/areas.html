@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Manage Areas{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row g-4">
+    <div class="col-md-5">
+      <div class="card shadow p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-map-pin text-danger me-2"></i>Add Locality / Area</h4>
+        <form method="POST" action="{{ url_for('admin.areas') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">City <span class="text-danger">*</span></label>
+            <select name="city_id" class="form-select" required>
+              <option value="">-- Choose City --</option>
+              {% for c in cities %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Area / Neighborhood Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Clifton Block 5" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Area Postal Code</label>
+            <input type="text" name="postal_code" class="form-control" placeholder="75600">
+          </div>
+          <button type="submit" class="btn btn-danger w-100 fw-semibold">Save Area</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card shadow p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-list text-primary me-2"></i>Areas Directory</h4>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Area Name</th>
+                <th>Parent City</th>
+                <th>Postal Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in areas %}
+              <tr>
+                <td><strong>{{ a.name }}</strong></td>
+                <td>{{ a.city.name if a.city else '-' }}</td>
+                <td>{{ a.postal_code or '-' }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-center text-muted py-3">No areas defined.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

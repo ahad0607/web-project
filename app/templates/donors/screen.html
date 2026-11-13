@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Screen Donor - {{ donor.full_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0 text-success"><i class="fas fa-heartbeat me-2"></i>Pre-Donation Clinical Screening</h4>
+          <a href="{{ url_for('donors.view', id=donor.id) }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+        <p class="text-muted small">
+          Donor: <strong>{{ donor.full_name }}</strong> &bull; Blood Group: <strong>{{ donor.blood_group.name }}</strong>
+        </p>
+
+        <div class="alert alert-warning py-2 small mb-4">
+          <i class="fas fa-exclamation-circle me-1"></i> <strong>Clinical Thresholds:</strong>
+          Hemoglobin &ge; 12.5 g/dL, Weight &ge; 50 kg, Systolic BP: 90–180 mmHg, Diastolic BP: 50–100 mmHg, Pulse: 50–100 bpm.
+        </div>
+
+        <form method="POST" action="{{ url_for('donors.screen', id=donor.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Hemoglobin Level (g/dL) <span class="text-danger">*</span></label>
+              <input type="number" step="0.1" name="hemoglobin_level" class="form-control" value="13.5" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Donor Weight (kg) <span class="text-danger">*</span></label>
+              <input type="number" step="0.5" name="weight_kg" class="form-control" value="{{ donor.weight_kg }}" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Systolic BP (mmHg)</label>
+              <input type="number" name="systolic_bp" class="form-control" value="120" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Diastolic BP (mmHg)</label>
+              <input type="number" name="diastolic_bp" class="form-control" value="80" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Pulse (bpm)</label>
+              <input type="number" name="pulse_bpm" class="form-control" value="72" required>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+              <i class="fas fa-check-circle me-1"></i> Complete & Verify Screening
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Add Hospital{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0"><i class="fas fa-hospital text-danger me-2"></i>Add Medical Facility</h4>
+          <a href="{{ url_for('hospitals.index') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('hospitals.create') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Hospital Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" placeholder="Indus Hospital & Health Network" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">License Number <span class="text-danger">*</span></label>
+              <input type="text" name="license_number" class="form-control" placeholder="HOSP-KHI-001" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">City <span class="text-danger">*</span></label>
+              <select name="city_id" class="form-select" required>
+                <option value="">-- Choose City --</option>
+                {% for c in cities %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
+              <input type="text" name="address" class="form-control" placeholder="Plot 123, Sector 5" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Phone <span class="text-danger">*</span></label>
+              <input type="tel" name="phone" class="form-control" placeholder="021-35112709" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" placeholder="info@hospital.org">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Emergency Hotline</label>
+              <input type="text" name="emergency_hotline" class="form-control" placeholder="021-111-111-222">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Total Beds</label>
+              <input type="number" name="total_beds" class="form-control" value="100">
+            </div>
+            <div class="col-md-4 d-flex align-items-center mt-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="has_blood_bank" id="bbCheck" checked>
+                <label class="form-check-label fw-semibold" for="bbCheck">Has Blood Bank</label>
+              </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-center mt-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="has_thalassemia_center" id="tcCheck" checked>
+                <label class="form-check-label fw-semibold" for="tcCheck">Has Thalassemia Center</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger px-4 fw-semibold">Save Hospital</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

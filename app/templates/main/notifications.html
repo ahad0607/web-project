@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0"><i class="fas fa-bell text-danger me-2"></i>Notifications</h3>
+    {% if notifications %}
+    <form action="{{ url_for('main.mark_all_notifications_read') }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-check-double me-1"></i> Mark All as Read
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for n in notifications %}
+      <li class="list-group-item p-3 {% if not n.is_read %}bg-danger-subtle border-start border-4 border-danger{% endif %}">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="me-3">
+            <h6 class="fw-bold mb-1">
+              {% if n.notification_type == 'Emergency' %}
+                <span class="badge bg-danger me-1">Emergency</span>
+              {% elif n.notification_type == 'Schedule' %}
+                <span class="badge bg-primary me-1">Schedule</span>
+              {% elif n.notification_type == 'Donation' %}
+                <span class="badge bg-success me-1">Donation</span>
+              {% endif %}
+              {{ n.title }}
+            </h6>
+            <p class="mb-1 text-secondary small">{{ n.message }}</p>
+            <span class="text-muted" style="font-size: 0.75rem;">{{ n.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+          </div>
+          <div class="d-flex gap-2">
+            {% if n.link_url %}
+              <a href="{{ n.link_url }}" class="btn btn-sm btn-outline-primary">View</a>
+            {% endif %}
+            {% if not n.is_read %}
+              <form action="{{ url_for('main.mark_notification_read', id=n.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as read">
+                  <i class="fas fa-check"></i>
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </li>
+      {% else %}
+      <li class="list-group-item text-center text-muted py-5">
+        <i class="fas fa-bell-slash fs-1 text-secondary mb-2 d-block"></i>
+        No notifications yet. You are completely up to date!
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

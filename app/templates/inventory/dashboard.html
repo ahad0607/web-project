@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Blood Bank Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-warehouse text-danger me-2"></i>Blood Bank Stock & Cold Chain Management</h3>
+      <p class="text-muted small mb-0">Live stock counts, component shelf-life tracking, and expiration surveillance</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('inventory.transactions') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-history me-1"></i> Stock Ledger
+      </a>
+      {% if current_user and (current_user.is_admin or current_user.is_hospital_staff) %}
+      <a href="{{ url_for('inventory.add_unit') }}" class="btn btn-danger fw-semibold">
+        <i class="fas fa-plus-circle me-1"></i> Add Bagged Unit
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Critical Alerts (Low Stock & Expiry) -->
+  {% if low_stock_groups or expiring_soon_units %}
+  <div class="row g-3 mb-4">
+    {% if low_stock_groups %}
+    <div class="col-md-6">
+      <div class="alert alert-danger shadow-sm border-danger d-flex align-items-center mb-0">
+        <i class="fas fa-exclamation-triangle fs-2 text-danger me-3 animate-pulse"></i>
+        <div>
+          <h6 class="fw-bold mb-1">CRITICAL: Low Blood Stock Detected!</h6>
+          <p class="small mb-0">The following blood groups have fewer than 5 units in storage:
+            {% for g in low_stock_groups %}
+              <span class="badge bg-danger ms-1 fs-6">{{ g }}</span>
+            {% endfor %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if expiring_soon_units %}
+    <div class="col-md-6">
+      <div class="alert alert-warning shadow-sm border-warning d-flex align-items-center mb-0">
+        <i class="fas fa-clock fs-2 text-warning me-3"></i>
+        <div>
+          <h6 class="fw-bold mb-1">UNITS EXPIRING SOON (&le; 7 Days)</h6>
+          <p class="small mb-0">
+            <strong>{{ expiring_soon_units|length }}</strong> units of PRBC / Whole Blood must be prioritized for scheduled transfusions.
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Stock By Blood Group Grid -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="fas fa-tint text-danger me-2"></i>Available Stock by Blood Group</h5>
+    <div class="row g-3">
+      {% for bg in blood_groups %}
+      {% set count = bg_counts[bg.name] %}
+      <div class="col-6 col-sm-4 col-md-3 col-xl-1-5">
+        <div class="card p-3 text-center border-2 {% if count < 5 %}border-danger bg-danger-subtle{% else %}border-success-subtle{% endif %}">
+          <div class="fs-4 fw-bold {% if count < 5 %}text-danger{% else %}text-success{% endif %}">
+            {{ bg.name }}
+          </div>
+          <div class="display-6 fw-bold my-1">{{ count }}</div>
+          <div class="small text-muted">Available Units</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Expiring Soon Units Table -->
+  {% if expiring_soon_units %}
+  <div class="card shadow-sm p-4 mb-4 border-warning">
+    <h5 class="fw-bold mb-3 text-warning text-dark"><i class="fas fa-hourglass-half text-warning me-2"></i>Urgent: Units Expiring Within 7 Days</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small">
+          <tr>
+            <th>Unit #</th>
+            <th>Group</th>
+            <th>Component</th>
+            <th>Storage Facility</th>
+            <th>Donation Date</th>
+            <th>Expiry Date</th>
+            <th>Days Remaining</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in expiring_soon_units %}
+          <tr>
+            <td><a href="{{ url_for('inventory.view_unit', id=u.id) }}" class="fw-bold text-danger">{{ u.unit_number }}</a></td>
+            <td>{{ macros.blood_badge(u.blood_group.name) }}</td>
+            <td><span class="badge bg-secondary-subtle text-dark">{{ u.component_type }}</span></td>
+            <td>{{ u.blood_bank.hospital.name if u.blood_bank and u.blood_bank.hospital else 'Main Bank' }}</td>
+            <td>{{ u.donation_date.strftime('%b %d, %Y') }}</td>
+            <td><strong>{{ u.expiry_date.strftime('%b %d, %Y') }}</strong></td>
+            <td><span class="badge bg-danger">{{ u.days_to_expiry }} day(s) left</span></td>
+            <td>
+              <a href="{{ url_for('transfusions.create_schedule') }}" class="btn btn-sm btn-outline-danger">Assign to Patient</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Links Row -->
+  <div class="text-center my-3">
+    <a href="{{ url_for('inventory.units') }}" class="btn btn-outline-danger px-4">
+      <i class="fas fa-list me-1"></i> View Full Blood Units Inventory Table
+    </a>
+  </div>
+
+</div>
+{% endblock %}

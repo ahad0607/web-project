@@ -1,0 +1,88 @@
+:root {
+  --primary-red: #d32f2f;
+  --primary-red-hover: #b71c1c;
+  --accent-cyan: #00acc1;
+  --bg-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+[data-bs-theme="dark"] {
+  --primary-red: #ef5350;
+  --primary-red-hover: #e53935;
+  --accent-cyan: #26c6da;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+footer {
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.brand-logo .bridge-text {
+  color: var(--primary-red);
+}
+
+.card {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08) !important;
+}
+
+.btn-danger {
+  background-color: var(--primary-red);
+  border-color: var(--primary-red);
+}
+
+.btn-danger:hover {
+  background-color: var(--primary-red-hover);
+  border-color: var(--primary-red-hover);
+}
+
+.animate-pulse {
+  animation: pulse-animation 1.5s infinite;
+}
+
+@keyframes pulse-animation {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.metric-card {
+  border-left: 4px solid var(--primary-red);
+}
+
+.avatar-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(211, 47, 47, 0.15);
+  color: var(--primary-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.table th {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}

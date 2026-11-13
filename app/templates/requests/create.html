@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Create Blood Request{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0 text-danger"><i class="fas fa-plus-circle me-2"></i>Create Blood Requisition</h4>
+          <a href="{{ url_for('requests.index') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('requests.create') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Requesting Hospital <span class="text-danger">*</span></label>
+              <select name="hospital_id" class="form-select" required>
+                <option value="">-- Choose Hospital --</option>
+                {% for h in hospitals %}
+                  <option value="{{ h.id }}">{{ h.name }} ({{ h.city.name if h.city else '' }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Patient (optional)</label>
+              <select name="patient_id" class="form-select">
+                <option value="">-- General Emergency Hospital Stock --</option>
+                {% for p in patients %}
+                  <option value="{{ p.id }}">{{ p.full_name }} (MRN: {{ p.mrn }} - {{ p.blood_group.name }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Required Blood Group <span class="text-danger">*</span></label>
+              <select name="blood_group_id" class="form-select" required>
+                <option value="">-- Select Blood Group --</option>
+                {% for bg in blood_groups %}
+                  <option value="{{ bg.id }}">{{ bg.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Component Type</label>
+              <select name="component_type" class="form-select">
+                <option value="PRBC">PRBC (Packed Red Blood Cells)</option>
+                <option value="Whole Blood">Whole Blood</option>
+                <option value="Platelets">Platelets</option>
+                <option value="FFP">FFP (Fresh Frozen Plasma)</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Units Requested <span class="text-danger">*</span></label>
+              <input type="number" min="1" max="20" name="units_requested" class="form-control" value="1" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Urgency Level <span class="text-danger">*</span></label>
+              <select name="urgency" class="form-select" required>
+                <option value="Normal">Normal (Routine Transfusion)</option>
+                <option value="Urgent">Urgent (Within 24 Hours)</option>
+                <option value="Emergency">🚨 EMERGENCY (Instant SOS Broadcast)</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Needed By Date <span class="text-danger">*</span></label>
+              <input type="date" name="needed_by_date" class="form-control" required>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Clinical Reason / Diagnosis Indication</label>
+              <textarea name="reason" class="form-control" rows="2" placeholder="e.g. Severe chronic anemia, pre-transfusion Hb 6.5 g/dL"></textarea>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger px-4 py-2 fw-semibold">
+              <i class="fas fa-paper-plane me-1"></i> Submit Blood Request
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

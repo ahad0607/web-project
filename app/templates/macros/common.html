@@ -1,0 +1,78 @@
+{# Reusable Jinja2 Macros for LifeBridge #}
+
+{% macro render_pagination(pagination, endpoint) %}
+  {% if pagination and pagination.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center flex-wrap">
+        {# Previous Page Link #}
+        {% if pagination.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num, **request.args|reject_key('page')) }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo; Prev</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">&laquo; Prev</span>
+          </li>
+        {% endif %}
+
+        {# Page Number Links #}
+        {% for page in pagination.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+          {% if page %}
+            {% if page == pagination.page %}
+              <li class="page-item active" aria-current="page">
+                <span class="page-link fw-bold">{{ page }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for(endpoint, page=page, **request.args|reject_key('page')) }}">{{ page }}</a>
+              </li>
+            {% endif %}
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% endif %}
+        {% endfor %}
+
+        {# Next Page Link #}
+        {% if pagination.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_num, **request.args|reject_key('page')) }}" aria-label="Next">
+              <span aria-hidden="true">Next &raquo;</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">Next &raquo;</span>
+          </li>
+        {% endif %}
+      </ul>
+      <p class="text-center text-muted small mt-1">
+        Showing {{ pagination.items|length }} of {{ pagination.total }} records (Page {{ pagination.page }} of {{ pagination.pages }})
+      </p>
+    </nav>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro status_badge(status) %}
+  {% set s = status|lower %}
+  {% if s in ['active', 'available', 'eligible', 'fulfilled', 'completed', 'success', 'accepted'] %}
+    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>{{ status }}</span>
+  {% elif s in ['pending', 'scheduled', 'upcoming', 'ongoing', 'in progress', 'booked'] %}
+    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>{{ status }}</span>
+  {% elif s in ['deactive', 'cancelled', 'expired', 'discarded', 'transfused', 'declined', 'deferred'] %}
+    <span class="badge bg-secondary"><i class="fas fa-ban me-1"></i>{{ status }}</span>
+  {% elif s in ['emergency', 'critical', 'urgent', 'life-threatening'] %}
+    <span class="badge bg-danger animate-pulse"><i class="fas fa-exclamation-triangle me-1"></i>{{ status }}</span>
+  {% else %}
+    <span class="badge bg-info text-dark">{{ status }}</span>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro blood_badge(blood_group_name) %}
+  <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1 fw-bold fs-6">
+    <i class="fas fa-tint me-1"></i>{{ blood_group_name }}
+  </span>
+{% endmacro %}

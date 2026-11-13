@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ doctor.full_name }} Schedules{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-calendar-alt text-danger me-2"></i>Doctor Clinic Schedule</h3>
+      <p class="text-muted small mb-0">{{ doctor.full_name }} &bull; {{ doctor.specialization }} ({{ doctor.hospital.name if doctor.hospital else '' }})</p>
+    </div>
+    <a href="{{ url_for('hospitals.view', id=doctor.hospital_id) if doctor.hospital_id else url_for('hospitals.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i> Hospital Details
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Add Weekly Shift</h5>
+        <form action="{{ url_for('hospitals.doctor_schedules', id=doctor.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Day of Week</label>
+            <select name="day_of_week" class="form-select" required>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Start Time</label>
+              <input type="text" name="start_time" class="form-control" value="09:00" placeholder="09:00" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">End Time</label>
+              <input type="text" name="end_time" class="form-control" value="14:00" placeholder="14:00" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Max Daily Patients</label>
+            <input type="number" name="max_patients" class="form-control" value="20" min="1" max="100" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-save me-1"></i> Save Clinic Shift
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light fw-bold">
+          <i class="fas fa-clock me-2"></i>Active Clinic Hours
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Day</th>
+                <th>Time Window</th>
+                <th>Capacity</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in schedules %}
+              <tr>
+                <td class="fw-bold">{{ s.day_of_week }}</td>
+                <td><span class="badge bg-secondary-subtle text-dark border">{{ s.start_time }} &ndash; {{ s.end_time }}</span></td>
+                <td>{{ s.max_patients }} patients / day</td>
+                <td><span class="badge bg-success">Active</span></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">No weekly shift schedules set for this doctor.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}System Roles & Permissions{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-user-shield text-danger me-2"></i>Roles & Permissions Matrix</h3>
+      <p class="text-muted small mb-0">Role-Based Access Control (RBAC) governance and permission assignments</p>
+    </div>
+    <a href="{{ url_for('admin.permissions') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-key me-1"></i> View All Permissions
+    </a>
+  </div>
+
+  <div class="row g-4">
+    {% for r in roles %}
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-0 text-primary">{{ r.name }}</h5>
+            <small class="text-muted">Slug: <code>{{ r.slug }}</code></small>
+          </div>
+          <span class="badge bg-primary-subtle text-primary border">{{ r.role_permissions|length }} Permissions</span>
+        </div>
+
+        <p class="text-secondary small">{{ r.description }}</p>
+
+        <h6 class="fw-semibold small text-uppercase text-muted mt-2">Assigned Permissions:</h6>
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% for rp in r.role_permissions %}
+            <span class="badge bg-secondary-subtle text-dark border">{{ rp.permission.name }}</span>
+          {% else %}
+            <span class="text-muted small">No explicit permissions mapped yet.</span>
+          {% endfor %}
+        </div>
+
+        <div class="mt-auto pt-3 border-top">
+          <form action="{{ url_for('admin.roles') }}" method="POST" class="d-flex gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="role_id" value="{{ r.id }}">
+            <select name="permission_id" class="form-select form-select-sm" required>
+              <option value="">-- Assign Permission --</option>
+              {% for p in permissions %}
+                <option value="{{ p.id }}">{{ p.module }} &bull; {{ p.name }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+              <i class="fas fa-plus me-1"></i> Add
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Blood Donation Campaigns{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-flag text-danger me-2"></i>Blood Donation Drives & Campaigns</h3>
+      <p class="text-muted small mb-0">University and community blood donation camps organized across Pakistan</p>
+    </div>
+    {% if current_user and (current_user.is_admin or current_user.is_hospital_staff) %}
+    <a href="{{ url_for('campaigns.create') }}" class="btn btn-danger fw-semibold">
+      <i class="fas fa-plus-circle me-1"></i> Organize Campaign Drive
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    {% for camp in campaigns %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100 p-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="fw-bold mb-0"><a href="{{ url_for('campaigns.view', id=camp.id) }}" class="text-dark text-decoration-none">{{ camp.title }}</a></h5>
+          {{ macros.status_badge(camp.status) }}
+        </div>
+
+        <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ camp.venue }}, {{ camp.city.name if camp.city else '' }}</p>
+        <p class="small text-secondary mb-3">{{ camp.description[:140] }}...</p>
+
+        <div class="mt-auto">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>Collected: <strong>{{ camp.collected_units }}</strong></span>
+            <span>Target: <strong>{{ camp.target_units }}</strong> Units</span>
+          </div>
+          <div class="progress mb-3" style="height: 10px;">
+            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ camp.progress_percentage }}%;">
+              {{ camp.progress_percentage }}%
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small text-muted"><i class="fas fa-calendar-alt me-1"></i>{{ camp.start_date.strftime('%b %d') }} - {{ camp.end_date.strftime('%b %d, %Y') }}</span>
+            <a href="{{ url_for('campaigns.view', id=camp.id) }}" class="btn btn-sm btn-outline-danger">View Drive</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="card p-5 text-center text-muted shadow-sm">
+        No blood donation campaigns found.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {{ macros.render_pagination(pagination, 'campaigns.index') }}
+
+</div>
+{% endblock %}

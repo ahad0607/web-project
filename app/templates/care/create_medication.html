@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Add Medication{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0 text-danger"><i class="fas fa-pills me-2"></i>Add Drug to Formulary</h4>
+          <a href="{{ url_for('care.medications') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('care.create_medication') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Drug Trade Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Asunra (Deferasirox)" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Generic Chemical Name <span class="text-danger">*</span></label>
+            <input type="text" name="generic_name" class="form-control" placeholder="e.g. Deferasirox" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Drug Classification</label>
+            <select name="drug_class" class="form-select">
+              <option value="Iron Chelator">Iron Chelator</option>
+              <option value="Folic Acid">Folic Acid Supplement</option>
+              <option value="Vitamin">Vitamin / Trace Element</option>
+              <option value="Antibiotic">Antibiotic (Post-splenectomy prophylaxis)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Dosage Form</label>
+            <select name="form" class="form-select">
+              <option value="Dispersible Tablet">Dispersible Tablet</option>
+              <option value="Film-coated Tablet">Film-coated Tablet</option>
+              <option value="Oral Syrup">Oral Syrup</option>
+              <option value="Subcutaneous Infusion">Subcutaneous Infusion</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Standard Recommended Dosage</label>
+            <input type="text" name="standard_dosage" class="form-control" placeholder="e.g. 20 - 40 mg/kg/day">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Therapeutic Instructions</label>
+            <textarea name="description" class="form-control" rows="2" placeholder="e.g. Take on an empty stomach at least 30 minutes before food"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-danger w-100 fw-semibold">Save Drug</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

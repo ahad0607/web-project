@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Feedback Moderation - Admin - LifeBridge{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-comments text-primary me-2"></i>Feedback Moderation</h3>
+      <p class="text-muted small mb-0">Review, moderate public visibility, or remove user submissions.</p>
+    </div>
+    <a href="{{ url_for('main.feedback') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+      <i class="fas fa-external-link-alt me-1"></i> View Public Feedback Page
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small">
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Category</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Submitted On</th>
+            <th>Public Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in feedbacks %}
+          <tr>
+            <td>#{{ f.id }}</td>
+            <td>
+              <div class="fw-semibold">{{ f.user.full_name if f.user else 'Anonymous' }}</div>
+              {% if f.user %}<small class="text-muted">{{ f.user.email }}</small>{% endif %}
+            </td>
+            <td><span class="badge bg-secondary-subtle text-secondary border">{{ f.category }}</span></td>
+            <td>
+              <span class="text-warning small">
+                {% for i in range(f.rating) %}⭐{% endfor %}
+              </span>
+            </td>
+            <td>
+              <div class="small text-truncate" style="max-width: 280px;" title="{{ f.comment }}">
+                "{{ f.comment }}"
+              </div>
+            </td>
+            <td><small class="text-muted">{{ f.created_at.strftime('%b %d, %Y %H:%M') }}</small></td>
+            <td>
+              {% if f.is_public %}
+                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Public</span>
+              {% else %}
+                <span class="badge bg-warning text-dark"><i class="fas fa-eye-slash me-1"></i>Hidden</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <form action="{{ url_for('admin.toggle_feedback_visibility', id=f.id) }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-info" title="Toggle Public Visibility">
+                  {% if f.is_public %}
+                    <i class="fas fa-eye-slash"></i> Hide
+                  {% else %}
+                    <i class="fas fa-eye"></i> Publish
+                  {% endif %}
+                </button>
+              </form>
+              <form action="{{ url_for('admin.delete_feedback', id=f.id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('Soft-delete this feedback?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove Feedback">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">No feedback entries found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

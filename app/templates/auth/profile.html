@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card shadow text-center p-4">
+        <div class="avatar-circle mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+          {{ user.full_name[:1]|upper }}
+        </div>
+        <h4 class="fw-bold mb-1">{{ user.full_name }}</h4>
+        <p class="text-muted small mb-2">@{{ user.username }}</p>
+        <div>
+          <span class="badge bg-danger fs-6">{{ user.role_name }}</span>
+        </div>
+        <hr class="my-3">
+        <div class="text-start small">
+          <p class="mb-2"><i class="fas fa-envelope text-muted me-2"></i> {{ user.email }}</p>
+          <p class="mb-2"><i class="fas fa-phone text-muted me-2"></i> {{ user.phone }}</p>
+          <p class="mb-2"><i class="fas fa-id-card text-muted me-2"></i> CNIC: {{ user.cnic or 'Not Provided' }}</p>
+          <p class="mb-2"><i class="fas fa-map-marker-alt text-muted me-2"></i> {{ user.city.name if user.city else 'Unknown City' }}</p>
+          <p class="mb-0 text-muted"><i class="fas fa-clock text-muted me-2"></i> Member since: {{ user.created_at.strftime('%b %d, %Y') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card shadow p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-user-edit text-danger me-2"></i>Update Profile Information</h4>
+        <form method="POST" action="{{ url_for('auth.profile') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name</label>
+              <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone Number</label>
+              <input type="tel" name="phone" class="form-control" value="{{ user.phone }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">CNIC</label>
+              <input type="text" name="cnic" class="form-control" value="{{ user.cnic or '' }}" placeholder="XXXXX-XXXXXXX-X">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">City</label>
+              <select name="city_id" class="form-select">
+                <option value="">-- Select City --</option>
+                {% for c in cities %}
+                  <option value="{{ c.id }}" {% if user.city_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Residential Address</label>
+              <input type="text" name="address" class="form-control" value="{{ user.address or '' }}">
+            </div>
+
+            <div class="col-12">
+              <hr class="my-2">
+              <h5 class="fw-semibold text-secondary">Change Password <small class="text-muted fw-normal fs-6">(leave blank to keep current)</small></h5>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">New Password</label>
+              <input type="password" name="new_password" class="form-control" placeholder="Minimum 6 characters">
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-danger px-4 fw-semibold">
+              <i class="fas fa-save me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

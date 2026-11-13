@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Blood Unit - {{ unit.unit_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <div class="card shadow p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <h3 class="fw-bold mb-0 text-danger">{{ unit.unit_number }}</h3>
+            {{ macros.blood_badge(unit.blood_group.name) }}
+            {{ macros.status_badge(unit.status) }}
+          </div>
+          {% if current_user and (current_user.is_admin or current_user.is_hospital_staff) %}
+          <a href="{{ url_for('inventory.edit_unit', id=unit.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-edit me-1"></i> Adjust Status
+          </a>
+          {% endif %}
+        </div>
+
+        <div class="row g-3 small">
+          <div class="col-md-6">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Component & Volume</div>
+              <h5 class="fw-bold mb-0">{{ unit.component_type }} ({{ unit.volume_ml }} mL)</h5>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Storage Location</div>
+              <h5 class="fw-bold mb-0">{{ unit.storage_location }}</h5>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Collection Date</div>
+              <h6 class="fw-bold mb-0">{{ unit.donation_date.strftime('%B %d, %Y') }}</h6>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Expiry Date</div>
+              <h6 class="fw-bold mb-0 {% if unit.is_expired %}text-danger{% elif unit.is_expiring_soon %}text-warning{% endif %}">
+                {{ unit.expiry_date.strftime('%B %d, %Y') }} ({{ unit.days_to_expiry }} days remaining)
+              </h6>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Facility & Source Donor</div>
+              <div>Hospital Bank: <strong>{{ unit.blood_bank.hospital.name if unit.blood_bank and unit.blood_bank.hospital else 'Main Facility' }}</strong></div>
+              <div>Donor: <strong>{{ unit.donor.full_name if unit.donor else 'Direct voluntary drive' }}</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Log -->
+      <div class="card shadow p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-history text-danger me-2"></i>Unit Custody & Movement History</h5>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Timestamp</th>
+                <th>Transaction Type</th>
+                <th>Quantity</th>
+                <th>Reason / Reference</th>
+                <th>Logged By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in transactions %}
+              <tr>
+                <td>{{ tx.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                <td><span class="badge bg-secondary">{{ tx.transaction_type }}</span></td>
+                <td>{{ tx.quantity }}</td>
+                <td>{{ tx.reason }}</td>
+                <td>{{ tx.performed_by.full_name if tx.performed_by else 'System' }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No transactions recorded.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

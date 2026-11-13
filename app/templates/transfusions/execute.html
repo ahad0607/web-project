@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Execute Transfusion{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow p-4 border-danger">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0 text-danger"><i class="fas fa-syringe me-2"></i>Execute Blood Transfusion</h4>
+          <a href="{{ url_for('transfusions.schedules') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <div class="p-3 mb-4 rounded bg-body-tertiary">
+          <div class="row g-2 small">
+            <div class="col-md-6">
+              Patient: <strong>{{ schedule.patient.full_name }}</strong> (MRN: {{ schedule.patient.mrn }})
+            </div>
+            <div class="col-md-6 text-md-end">
+              Blood Group: {{ macros.blood_badge(schedule.blood_group.name) }}
+            </div>
+            <div class="col-md-6">
+              Hospital: <strong>{{ schedule.hospital.name }}</strong>
+            </div>
+            <div class="col-md-6 text-md-end">
+              Scheduled Date: <strong>{{ schedule.scheduled_date.strftime('%B %d, %Y') }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('transfusions.execute', id=schedule.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Select Available Blood Unit from Bank <span class="text-danger">*</span></label>
+              <select name="blood_unit_id" class="form-select" required>
+                <option value="">-- Choose Crossmatched Blood Unit --</option>
+                {% for u in available_units %}
+                  <option value="{{ u.id }}">
+                    {{ u.unit_number }} ({{ u.blood_group.name }} - {{ u.component_type }}) &bull; Expires: {{ u.expiry_date.strftime('%b %d') }} &bull; Location: {{ u.storage_location }}
+                  </option>
+                {% endfor %}
+              </select>
+              {% if not available_units %}
+              <div class="form-text text-danger">
+                <i class="fas fa-exclamation-triangle me-1"></i> No available {{ schedule.blood_group.name }} units in blood bank! Please add units in inventory first.
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Pre-Transfusion Hb (g/dL) <span class="text-danger">*</span></label>
+              <input type="number" step="0.1" name="pre_transfusion_hb" class="form-control" value="{{ schedule.patient.baseline_hemoglobin }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Post-Transfusion Target/Measured Hb (g/dL) <span class="text-danger">*</span></label>
+              <input type="number" step="0.1" name="post_transfusion_hb" class="form-control" value="9.8" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Infusion Start Time</label>
+              <input type="text" name="start_time" class="form-control" value="10:00 AM">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Infusion End Time</label>
+              <input type="text" name="end_time" class="form-control" value="01:30 PM">
+            </div>
+
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="adverse_reaction_observed" id="reactionCheck">
+                <label class="form-check-label fw-semibold text-danger" for="reactionCheck">
+                  Adverse Transfusion Reaction Observed (Febrile / Allergic / Hemolytic)
+                </label>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Adverse Reaction Details (if any)</label>
+              <input type="text" name="reaction_details" class="form-control" placeholder="e.g. Mild shivering treated with antihistamine">
+            </div>
+
+            <div class="col-12">
+              <div class="form-check p-3 border rounded bg-success-subtle border-success">
+                <input class="form-check-input" type="checkbox" name="schedule_next_transfusion" id="nextCheck" checked>
+                <label class="form-check-label fw-semibold text-success" for="nextCheck">
+                  <i class="fas fa-redo me-1"></i> Automatically book next recurring transfusion (in {{ schedule.patient.transfusion_interval_days }} days)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger px-4 py-2 fw-semibold" {% if not available_units %}disabled{% endif %}>
+              <i class="fas fa-check-circle me-1"></i> Complete & Finalize Transfusion Record
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

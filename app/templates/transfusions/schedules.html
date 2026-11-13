@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Transfusion Schedules{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-calendar-alt text-danger me-2"></i>Thalassemia Transfusion Schedules</h3>
+      <p class="text-muted small mb-0">Routine 2–4 week recurring blood transfusion appointments and auto-linked blood requisitions</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('transfusions.records') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-file-medical-alt me-1"></i> Completed Records
+      </a>
+      {% if current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+      <a href="{{ url_for('transfusions.create_schedule') }}" class="btn btn-danger fw-semibold">
+        <i class="fas fa-calendar-plus me-1"></i> Book Transfusion
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="card shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('transfusions.schedules') }}" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <select name="patient_id" class="form-select">
+          <option value="">-- All Patients --</option>
+          {% for p in patients %}
+            <option value="{{ p.id }}" {% if selected_patient == p.id %}selected{% endif %}>{{ p.full_name }} (MRN: {{ p.mrn }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select name="status" class="form-select">
+          <option value="">-- Status --</option>
+          <option value="Scheduled" {% if selected_status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+          <option value="Completed" {% if selected_status == 'Completed' %}selected{% endif %}>Completed</option>
+          <option value="Cancelled" {% if selected_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+        {% if selected_patient or selected_status %}
+          <a href="{{ url_for('transfusions.schedules') }}" class="btn btn-outline-secondary" title="Reset"><i class="fas fa-undo"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Schedules Table -->
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Schedule Date</th>
+            <th>Patient (MRN)</th>
+            <th>Blood Group</th>
+            <th>Required Units</th>
+            <th>Target Hb</th>
+            <th>Hospital & Doctor</th>
+            <th>Linked Requisition</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in schedules %}
+          <tr>
+            <td>
+              <strong class="text-danger">{{ s.scheduled_date.strftime('%b %d, %Y') }}</strong>
+              {% if s.is_upcoming %}
+                <span class="badge bg-primary-subtle text-primary ms-1">Upcoming</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('patients.view', id=s.patient.id) }}" class="fw-bold text-dark text-decoration-none">
+                {{ s.patient.full_name }}
+              </a>
+              <div class="text-muted small">MRN: {{ s.patient.mrn }}</div>
+            </td>
+            <td>{{ macros.blood_badge(s.blood_group.name) }}</td>
+            <td>{{ s.required_units }} Unit(s)</td>
+            <td>{{ s.target_hemoglobin }} g/dL</td>
+            <td>
+              <div class="small fw-semibold">{{ s.hospital.name }}</div>
+              <small class="text-muted">{{ s.doctor.full_name if s.doctor else 'Attending Staff' }}</small>
+            </td>
+            <td>
+              {% if s.linked_blood_request %}
+                <a href="{{ url_for('requests.view', id=s.linked_blood_request.id) }}" class="badge bg-info text-dark text-decoration-none">
+                  Req #{{ s.linked_blood_request.id }} ({{ s.linked_blood_request.status }})
+                </a>
+              {% else %}
+                <span class="text-muted small">None Linked</span>
+              {% endif %}
+            </td>
+            <td>{{ macros.status_badge(s.status) }}</td>
+            <td class="text-end">
+              {% if s.status == 'Scheduled' and current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+              <a href="{{ url_for('transfusions.execute', id=s.id) }}" class="btn btn-sm btn-danger fw-semibold">
+                <i class="fas fa-syringe me-1"></i> Execute
+              </a>
+              {% elif s.status == 'Completed' and s.transfusion_record %}
+              <span class="text-success small fw-semibold"><i class="fas fa-check-circle me-1"></i>Recorded</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="text-center text-muted py-5">
+              <i class="fas fa-calendar-times fs-1 text-secondary mb-2 d-block"></i>
+              No transfusion schedules found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ macros.render_pagination(pagination, 'transfusions.schedules') }}
+
+</div>
+{% endblock %}

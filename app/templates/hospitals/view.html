@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}{{ hospital.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="card shadow-sm p-4 mb-4 border-danger">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <h3 class="fw-bold mb-1 text-danger">{{ hospital.name }}</h3>
+        <p class="text-muted small mb-1">
+          <i class="fas fa-certificate me-1"></i> License: <strong>{{ hospital.license_number }}</strong> &bull;
+          <i class="fas fa-map-marker-alt me-1"></i> {{ hospital.address }}, {{ hospital.city.name if hospital.city else '' }}
+        </p>
+        <div class="small">
+          <span class="me-3"><i class="fas fa-phone-alt me-1 text-muted"></i> {{ hospital.phone }}</span>
+          {% if hospital.emergency_hotline %}
+          <span class="text-danger fw-bold"><i class="fas fa-ambulance me-1"></i> Emergency Hotline: {{ hospital.emergency_hotline }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        {% if current_user and current_user.is_admin %}
+        <a href="{{ url_for('hospitals.create_doctor', id=hospital.id) }}" class="btn btn-outline-danger btn-sm">
+          <i class="fas fa-user-md me-1"></i> Add Doctor
+        </a>
+        <a href="{{ url_for('hospitals.edit', id=hospital.id) }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-edit me-1"></i> Edit Facility
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Blood Bank Card -->
+    {% if blood_bank %}
+    <div class="col-md-4">
+      <div class="card shadow-sm p-4 h-100 border-danger">
+        <h5 class="fw-bold text-danger border-bottom pb-2 mb-3">
+          <i class="fas fa-warehouse me-2"></i>Attached Blood Bank
+        </h5>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span>License:</span>
+          <strong>{{ blood_bank.license_number }}</strong>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span>In-Charge Officer:</span>
+          <strong>{{ blood_bank.in_charge_name }}</strong>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span>Storage Capacity:</span>
+          <strong>{{ blood_bank.storage_capacity_units }} Units</strong>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span>Current Stock:</span>
+          <span class="badge bg-danger fs-6">{{ blood_bank.current_stock_units }} Units</span>
+        </div>
+        <a href="{{ url_for('inventory.units') }}" class="btn btn-outline-danger btn-sm w-100 mt-auto">
+          Manage Blood Units
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Departments -->
+    <div class="col-md-4">
+      <div class="card shadow-sm p-4 h-100">
+        <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+          <i class="fas fa-sitemap me-2"></i>Hospital Departments
+        </h5>
+        <ul class="list-group list-group-flush small">
+          {% for dept in departments %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><strong>{{ dept.name }}</strong> ({{ dept.floor }})</span>
+            <span class="text-muted">{{ dept.doctors|length }} Doctors</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted py-3 text-center">No departments registered.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Doctors -->
+    <div class="col-md-4">
+      <div class="card shadow-sm p-4 h-100">
+        <h5 class="fw-bold text-success border-bottom pb-2 mb-3">
+          <i class="fas fa-user-md me-2"></i>Medical Specialists
+        </h5>
+        <ul class="list-group list-group-flush small">
+          {% for doc in doctors %}
+          <li class="list-group-item px-0">
+            <div class="fw-bold">{{ doc.full_name }}</div>
+            <div class="text-muted">{{ doc.specialization }} &bull; PMDC #{{ doc.license_number }}</div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted py-3 text-center">No doctors registered yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

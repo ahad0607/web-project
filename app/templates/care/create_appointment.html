@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Book Consultation{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0 text-danger"><i class="fas fa-calendar-plus me-2"></i>Book Clinical Consultation</h4>
+          <a href="{{ url_for('care.appointments') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('care.create_appointment') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Patient <span class="text-danger">*</span></label>
+              <select name="patient_id" class="form-select" required>
+                <option value="">-- Choose Patient --</option>
+                {% for p in patients %}
+                  <option value="{{ p.id }}">{{ p.full_name }} (MRN: {{ p.mrn }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Consulting Specialist <span class="text-danger">*</span></label>
+              <select name="doctor_id" class="form-select" required>
+                <option value="">-- Select Doctor --</option>
+                {% for d in doctors %}
+                  <option value="{{ d.id }}">{{ d.full_name }} ({{ d.specialization }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Hospital Facility <span class="text-danger">*</span></label>
+              <select name="hospital_id" class="form-select" required>
+                <option value="">-- Select Hospital --</option>
+                {% for h in hospitals %}
+                  <option value="{{ h.id }}">{{ h.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Appointment Date <span class="text-danger">*</span></label>
+              <input type="date" name="appointment_date" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Time Slot</label>
+              <select name="time_slot" class="form-select">
+                <option value="09:00 AM - 09:30 AM">09:00 AM - 09:30 AM</option>
+                <option value="10:00 AM - 10:30 AM" selected>10:00 AM - 10:30 AM</option>
+                <option value="11:30 AM - 12:00 PM">11:30 AM - 12:00 PM</option>
+                <option value="02:00 PM - 02:30 PM">02:00 PM - 02:30 PM</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Appointment Type</label>
+              <select name="appointment_type" class="form-select">
+                <option value="Regular Checkup">Regular Checkup</option>
+                <option value="Pre-transfusion">Pre-transfusion Evaluation</option>
+                <option value="Post-transfusion">Post-transfusion Review</option>
+                <option value="Iron Chelation Review">Iron Chelation Review</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Reason for Visit</label>
+              <input type="text" name="reason" class="form-control" value="Routine Clinical Review">
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger px-4 fw-semibold">
+              <i class="fas fa-check-circle me-1"></i> Confirm Appointment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

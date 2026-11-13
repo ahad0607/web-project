@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Live Emergency SOS Monitor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="text-center mb-5">
+    <div class="d-inline-block p-3 rounded-circle bg-danger-subtle text-danger mb-2 animate-pulse">
+      <i class="fas fa-bullhorn fs-1"></i>
+    </div>
+    <h2 class="fw-bold text-danger">Live Emergency Blood SOS Broadcasts</h2>
+    <p class="text-muted">High-priority emergency alerts actively broadcasted to nearby verified donors</p>
+  </div>
+
+  <div class="row g-4">
+    {% for em in emergencies %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow border-danger border-2 h-100 p-4 position-relative">
+        <span class="position-absolute top-0 end-0 badge bg-danger m-3 animate-pulse">
+          <i class="fas fa-bolt me-1"></i> CRITICAL
+        </span>
+
+        <div class="mb-3">
+          {{ macros.blood_badge(em.blood_group.name) }}
+          <h4 class="fw-bold mt-2 text-danger">Need {{ em.units_needed }} Unit(s)</h4>
+        </div>
+
+        <div class="small text-secondary mb-3">
+          <div><i class="fas fa-hospital text-danger me-1"></i> Hospital: <strong>{{ em.hospital.name }}</strong></div>
+          <div><i class="fas fa-map-marker-alt text-danger me-1"></i> City: <strong>{{ em.hospital.city.name if em.hospital.city else 'Pakistan' }}</strong></div>
+          <div><i class="fas fa-clock text-danger me-1"></i> Broadcasted: {{ em.broadcast_time.strftime('%I:%M %p') }}</div>
+          {% if em.hospital.emergency_hotline %}
+          <div class="mt-2 text-dark fw-bold"><i class="fas fa-phone-alt text-danger me-1"></i> Hotline: {{ em.hospital.emergency_hotline }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mt-auto pt-3 border-top d-flex gap-2">
+          <a href="{{ url_for('requests.view', id=em.request_id) }}" class="btn btn-outline-danger btn-sm w-100">
+            View Emergency Match
+          </a>
+          {% if current_user and current_user.is_donor %}
+          <a href="{{ url_for('donors.emergency_matches') }}" class="btn btn-danger btn-sm w-100 fw-bold">
+            Respond Now
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="card p-5 text-center text-muted shadow-sm">
+        <i class="fas fa-check-circle fs-1 text-success mb-3 d-block"></i>
+        <h4 class="fw-bold text-success">No Active Emergency SOS Requests</h4>
+        <p class="text-secondary small mb-0">All acute hospital blood requirements are presently fulfilled.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

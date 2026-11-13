@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Edit Campaign{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0"><i class="fas fa-edit text-danger me-2"></i>Edit Campaign Details</h4>
+          <a href="{{ url_for('campaigns.view', id=campaign.id) }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('campaigns.edit', id=campaign.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Title</label>
+              <input type="text" name="title" class="form-control" value="{{ campaign.title }}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Venue</label>
+              <input type="text" name="venue" class="form-control" value="{{ campaign.venue }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Target Units</label>
+              <input type="number" name="target_units" class="form-control" value="{{ campaign.target_units }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Status</label>
+              <select name="status" class="form-select">
+                <option value="Upcoming" {% if campaign.status == 'Upcoming' %}selected{% endif %}>Upcoming</option>
+                <option value="Ongoing" {% if campaign.status == 'Ongoing' %}selected{% endif %}>Ongoing</option>
+                <option value="Completed" {% if campaign.status == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Cancelled" {% if campaign.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Description</label>
+              <textarea name="description" class="form-control" rows="3">{{ campaign.description }}</textarea>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-danger px-4 fw-semibold">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

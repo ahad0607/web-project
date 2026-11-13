@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Donor Profile - {{ donor.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <!-- Donor Header Card -->
+  <div class="card shadow-sm p-4 mb-4 border-success">
+    <div class="row g-3 align-items-center">
+      <div class="col-lg-7 d-flex align-items-center">
+        <div class="avatar-circle me-3 bg-success-subtle text-success" style="width: 70px; height: 70px; font-size: 1.8rem;">
+          {{ donor.full_name[:1]|upper }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <h3 class="fw-bold mb-0">{{ donor.full_name }}</h3>
+            {{ macros.blood_badge(donor.blood_group.name) }}
+            {% if donor.is_eligible_to_donate %}
+              <span class="badge bg-success fs-6"><i class="fas fa-check-circle me-1"></i>Eligible</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6"><i class="fas fa-clock me-1"></i>Cooldown Active</span>
+            {% endif %}
+          </div>
+          <div class="text-muted small">
+            <span>City: <strong>{{ donor.city.name if donor.city else 'Pakistan' }}</strong></span> &bull;
+            <span>Age: <strong>{{ donor.age }} yrs</strong></span> &bull;
+            <span>Weight: <strong>{{ donor.weight_kg }} kg</strong></span> &bull;
+            <span>Total Donations: <strong class="text-danger">{{ donor.total_donations }}</strong></span>
+          </div>
+          <div class="text-muted small mt-1">
+            {% if current_user and (current_user.is_admin or current_user.role.slug in ('hospital_staff', 'doctor') or current_user.id == donor.user_id) %}
+              <span><i class="fas fa-phone-alt me-1"></i>Phone: <strong>{{ donor.user.phone if donor.user else 'N/A' }}</strong></span> &bull;
+              <span><i class="fas fa-id-card me-1"></i>CNIC: <strong>{{ donor.user.cnic if (donor.user and donor.user.cnic) else 'N/A' }}</strong></span>
+            {% else %}
+              <span><i class="fas fa-lock me-1"></i>Contact details restricted to authorized medical staff</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5 text-lg-end">
+        <div class="d-flex justify-content-lg-end gap-2 flex-wrap">
+          {% if current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+          <a href="{{ url_for('donors.screen', id=donor.id) }}" class="btn btn-outline-success btn-sm fw-semibold">
+            <i class="fas fa-heartbeat me-1"></i> Clinical Screening
+          </a>
+          {% endif %}
+          {% if current_user and (current_user.is_admin or current_user.id == donor.user_id) %}
+          <a href="{{ url_for('donors.edit', id=donor.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-edit me-1"></i> Edit Profile
+          </a>
+          {% endif %}
+        </div>
+        <div class="mt-2 text-muted small">
+          Last Donation: <strong>{{ donor.last_donation_date.strftime('%B %d, %Y') if donor.last_donation_date else 'No previous records' }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Badges & Emergency Preferences -->
+    <div class="col-lg-4">
+      
+      <!-- Badges Card -->
+      <div class="card shadow-sm p-3 mb-4">
+        <h5 class="fw-bold text-warning border-bottom pb-2 mb-3">
+          <i class="fas fa-award text-warning me-2"></i>Earned Recognition Badges
+        </h5>
+        <div class="d-flex flex-wrap gap-2">
+          {% for b in badges %}
+          <div class="p-2 border rounded-3 text-center bg-body-tertiary flex-grow-1" style="min-width: 120px;">
+            <i class="fas fa-award fs-3 text-warning mb-1 d-block"></i>
+            <div class="fw-bold small">{{ b.name }}</div>
+            <small class="text-muted" style="font-size: 0.7rem;">{{ b.description }}</small>
+          </div>
+          {% else %}
+          <p class="text-muted small py-2 mb-0">No badges earned yet. Complete your first donation to unlock the Bronze Donor badge!</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Emergency Availability Settings -->
+      <div class="card shadow-sm p-3 mb-4">
+        <h5 class="fw-bold text-danger border-bottom pb-2 mb-3">
+          <i class="fas fa-bolt text-danger me-2"></i>Emergency Availability
+        </h5>
+        {% if current_user and (current_user.is_admin or current_user.id == donor.user_id) %}
+        <form action="{{ url_for('donors.update_availability', id=donor.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="is_available_for_emergency" id="emergencySwitch" {% if donor.availability and donor.availability.is_available_for_emergency %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="emergencySwitch">Available for SOS Alerts</label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Travel Radius (km)</label>
+            <input type="number" name="travel_radius_km" class="form-control form-control-sm" value="{{ donor.availability.travel_radius_km if donor.availability else 25 }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Preferred Time</label>
+            <select name="preferred_time_slot" class="form-select form-select-sm">
+              <option value="Anytime" {% if donor.availability and donor.availability.preferred_time_slot == 'Anytime' %}selected{% endif %}>Anytime (24/7)</option>
+              <option value="Morning" {% if donor.availability and donor.availability.preferred_time_slot == 'Morning' %}selected{% endif %}>Morning (9 AM - 1 PM)</option>
+              <option value="Evening" {% if donor.availability and donor.availability.preferred_time_slot == 'Evening' %}selected{% endif %}>Evening (5 PM - 9 PM)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-outline-danger btn-sm w-100">Update Preferences</button>
+        </form>
+        {% else %}
+        <p class="small text-muted mb-0">
+          Emergency Status: <strong>{{ 'Active' if donor.availability and donor.availability.is_available_for_emergency else 'Inactive' }}</strong><br>
+          Radius: {{ donor.availability.travel_radius_km if donor.availability else 25 }} km
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Screening & Donations History -->
+    <div class="col-lg-8">
+      
+      <!-- Pre-Donation Screening History -->
+      <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-success"><i class="fas fa-heartbeat me-2"></i>Clinical Screening History</h5>
+          {% if current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+          <a href="{{ url_for('donors.screen', id=donor.id) }}" class="btn btn-sm btn-outline-success">
+            <i class="fas fa-plus me-1"></i> New Screening
+          </a>
+          {% endif %}
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Date</th>
+                <th>Hb Level</th>
+                <th>Blood Pressure</th>
+                <th>Pulse</th>
+                <th>Weight</th>
+                <th>Screening Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sc in screenings %}
+              <tr>
+                <td>{{ sc.screening_date.strftime('%b %d, %Y') }}</td>
+                <td><strong>{{ sc.hemoglobin_level }} g/dL</strong></td>
+                <td>{{ sc.systolic_bp }} / {{ sc.diastolic_bp }} mmHg</td>
+                <td>{{ sc.pulse_bpm }} bpm</td>
+                <td>{{ sc.weight_kg }} kg</td>
+                <td>
+                  {% if sc.is_eligible %}
+                    <span class="badge bg-success">Passed</span>
+                  {% else %}
+                    <span class="badge bg-danger" title="{{ sc.disqualification_reason }}">Deferred</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="text-center text-muted py-3">No pre-donation health screening recorded.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Donation History -->
+      <div class="card shadow-sm p-4 mb-4">
+        <h5 class="fw-bold mb-3 text-danger"><i class="fas fa-tint me-2"></i>Blood Donation Events</h5>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Date</th>
+                <th>Hospital / Facility</th>
+                <th>Type</th>
+                <th>Volume</th>
+                <th>Campaign</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for don in donations %}
+              <tr>
+                <td>{{ don.donation_date.strftime('%b %d, %Y') }}</td>
+                <td>{{ don.hospital.name if don.hospital else 'Main Blood Bank' }}</td>
+                <td><span class="badge bg-info-subtle text-info border">{{ don.donation_type }}</span></td>
+                <td>{{ don.volume_ml }} mL</td>
+                <td>{{ don.campaign.title if don.campaign else 'Regular Donation' }}</td>
+                <td>{{ macros.status_badge(don.status) }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="text-center text-muted py-3">No donation history recorded yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

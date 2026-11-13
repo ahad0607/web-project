@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Hospitals & Centers{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-hospital text-danger me-2"></i>Medical Centers & Blood Facilities</h3>
+      <p class="text-muted small mb-0">Authorized hospitals providing thalassemia day-care and blood transfusion services</p>
+    </div>
+    {% if current_user and current_user.is_admin %}
+    <a href="{{ url_for('hospitals.create') }}" class="btn btn-danger fw-semibold">
+      <i class="fas fa-plus-circle me-1"></i> Add Hospital
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search/Filter -->
+  <div class="card shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('hospitals.index') }}" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="Search hospital name, license, address..." value="{{ search }}">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select name="city_id" class="form-select">
+          <option value="">-- All Cities --</option>
+          {% for c in cities %}
+            <option value="{{ c.id }}" {% if selected_city == c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+        {% if search or selected_city %}
+          <a href="{{ url_for('hospitals.index') }}" class="btn btn-outline-secondary" title="Reset"><i class="fas fa-undo"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Hospitals Grid -->
+  <div class="row g-4">
+    {% for h in hospitals %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100 p-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="fw-bold mb-0 text-danger"><a href="{{ url_for('hospitals.view', id=h.id) }}" class="text-decoration-none text-danger">{{ h.name }}</a></h5>
+          <span class="badge bg-secondary-subtle text-dark border">{{ h.license_number }}</span>
+        </div>
+        <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ h.address }}, {{ h.city.name if h.city else '' }}</p>
+
+        <div class="small text-secondary mb-3">
+          <div><i class="fas fa-phone-alt me-1 text-muted"></i> Phone: <strong>{{ h.phone }}</strong></div>
+          {% if h.emergency_hotline %}
+          <div><i class="fas fa-ambulance me-1 text-danger"></i> SOS Hotline: <strong>{{ h.emergency_hotline }}</strong></div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex gap-2 mb-3">
+          {% if h.has_blood_bank %}
+            <span class="badge bg-danger-subtle text-danger border border-danger"><i class="fas fa-tint me-1"></i>Blood Bank</span>
+          {% endif %}
+          {% if h.has_thalassemia_center %}
+            <span class="badge bg-success-subtle text-success border border-success"><i class="fas fa-heartbeat me-1"></i>Thalassemia Wing</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('hospitals.view', id=h.id) }}" class="btn btn-sm btn-outline-danger">View Facility</a>
+          {% if current_user and current_user.is_admin %}
+          <div class="btn-group btn-group-sm">
+            <a href="{{ url_for('hospitals.edit', id=h.id) }}" class="btn btn-outline-secondary"><i class="fas fa-edit"></i></a>
+            <form action="{{ url_for('hospitals.delete', id=h.id) }}" method="POST" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="card p-5 text-center text-muted shadow-sm">
+        No hospitals found matching criteria.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {{ macros.render_pagination(pagination, 'hospitals.index') }}
+
+</div>
+{% endblock %}

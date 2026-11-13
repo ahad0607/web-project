@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Inventory Transactions Ledger{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-history text-danger me-2"></i>Inventory Transactions Ledger</h3>
+      <p class="text-muted small mb-0">Complete audit trail of all blood stock movements, donations, transfusions, and discards</p>
+    </div>
+    <a href="{{ url_for('inventory.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i> Back to Inventory
+    </a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Tx #</th>
+            <th>Date & Time</th>
+            <th>Unit Number</th>
+            <th>Blood Bank / Facility</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Reason / Remarks</th>
+            <th>Staff Officer</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td>#{{ tx.id }}</td>
+            <td>{{ tx.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+            <td>
+              {% if tx.blood_unit %}
+                <a href="{{ url_for('inventory.view_unit', id=tx.blood_unit.id) }}" class="fw-bold text-danger">
+                  {{ tx.blood_unit.unit_number }} ({{ tx.blood_unit.blood_group.name }})
+                </a>
+              {% else %}
+                <span class="text-muted">Unit #{{ tx.blood_unit_id }}</span>
+              {% endif %}
+            </td>
+            <td>{{ tx.blood_bank.hospital.name if tx.blood_bank and tx.blood_bank.hospital else 'Main Facility' }}</td>
+            <td>
+              {% if 'IN' in tx.transaction_type %}
+                <span class="badge bg-success"><i class="fas fa-arrow-down me-1"></i>{{ tx.transaction_type }}</span>
+              {% else %}
+                <span class="badge bg-danger"><i class="fas fa-arrow-up me-1"></i>{{ tx.transaction_type }}</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ tx.quantity }}</strong></td>
+            <td><small class="text-secondary">{{ tx.reason }}</small></td>
+            <td><small>{{ tx.performed_by.full_name if tx.performed_by else 'System' }}</small></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-5">No inventory transactions logged.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ macros.render_pagination(pagination, 'inventory.transactions') }}
+
+</div>
+{% endblock %}

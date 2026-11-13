@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Patient Chart - {{ patient.mrn }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  <!-- Patient Summary Header Card -->
+  <div class="card shadow-sm p-4 mb-4 border-danger">
+    <div class="row g-3 align-items-center">
+      <div class="col-lg-7 d-flex align-items-center">
+        <div class="avatar-circle me-3" style="width: 70px; height: 70px; font-size: 1.8rem;">
+          {{ patient.full_name[:1]|upper }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <h3 class="fw-bold mb-0">{{ patient.full_name }}</h3>
+            {{ macros.blood_badge(patient.blood_group.name) }}
+            {{ macros.status_badge(patient.status) }}
+          </div>
+          <div class="text-muted small">
+            <span>MRN: <strong class="text-danger">{{ patient.mrn }}</strong></span> &bull;
+            <span>Age: <strong>{{ patient.age }} yrs</strong> ({{ patient.gender }})</span> &bull;
+            <span>Diagnosis: <strong>{{ patient.diagnosis.name if patient.diagnosis else 'Thalassemia Major' }}</strong></span>
+          </div>
+          <div class="text-muted small mt-1">
+            <i class="fas fa-hospital me-1"></i>{{ patient.primary_hospital.name if patient.primary_hospital else 'Unassigned' }} &bull;
+            <i class="fas fa-user-md me-1"></i>{{ patient.primary_doctor.full_name if patient.primary_doctor else 'Unassigned' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5 text-lg-end">
+        <div class="d-flex justify-content-lg-end gap-2 flex-wrap">
+          <a href="{{ url_for('transfusions.create_schedule') }}" class="btn btn-danger btn-sm fw-semibold">
+            <i class="fas fa-calendar-plus me-1"></i> Schedule Transfusion
+          </a>
+          <a href="{{ url_for('care.create_appointment') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-stethoscope me-1"></i> Book Clinic
+          </a>
+          <a href="{{ url_for('patients.edit', id=patient.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-edit me-1"></i> Edit
+          </a>
+        </div>
+        <div class="mt-2 text-muted small">
+          <i class="fas fa-phone-alt text-danger me-1"></i> Emergency Contact: <strong>{{ patient.emergency_contact_name }}</strong> ({{ patient.emergency_contact_phone }})
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical Overview & Tabs -->
+  <div class="row g-4">
+    <!-- Left Column: Medical History & Guardians -->
+    <div class="col-lg-4">
+      <!-- Complications & Surgical History -->
+      <div class="card shadow-sm p-3 mb-4">
+        <h5 class="fw-bold text-danger border-bottom pb-2 mb-3">
+          <i class="fas fa-notes-medical me-2"></i>Medical History
+        </h5>
+        {% if medical_history %}
+        <ul class="list-group list-group-flush small">
+          <li class="list-group-item d-flex justify-content-between px-0">
+            <span>Splenectomy Performed:</span>
+            <strong>{{ 'Yes (' ~ medical_history.splenectomy_date.strftime('%Y') ~ ')' if medical_history.splenectomy_done else 'No' }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0">
+            <span>Hepatitis B Status:</span>
+            <span class="badge bg-{{ 'success' if medical_history.hepatitis_b_status == 'Negative' else 'warning text-dark' }}">{{ medical_history.hepatitis_b_status }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0">
+            <span>Hepatitis C Status:</span>
+            <span class="badge bg-{{ 'success' if medical_history.hepatitis_c_status == 'Negative' else 'danger' }}">{{ medical_history.hepatitis_c_status }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0">
+            <span>HIV Status:</span>
+            <span class="badge bg-success">{{ medical_history.hiv_status }}</span>
+          </li>
+          <li class="list-group-item px-0">
+            <span>Known Allergies:</span>
+            <div class="fw-semibold">{{ medical_history.allergies or 'None reported' }}</div>
+          </li>
+          <li class="list-group-item px-0">
+            <span>Cardiac / Endocrine:</span>
+            <div class="fw-semibold">{{ medical_history.cardiac_complications or 'Normal' }} / {{ medical_history.endocrine_complications or 'None' }}</div>
+          </li>
+        </ul>
+        {% else %}
+        <p class="text-muted small">No baseline history recorded.</p>
+        {% endif %}
+      </div>
+
+      <!-- Guardians Card -->
+      <div class="card shadow-sm p-3">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+          <h5 class="fw-bold mb-0"><i class="fas fa-users text-primary me-2"></i>Guardians</h5>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addGuardianModal">
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
+        <ul class="list-group list-group-flush small">
+          {% for g_link in patient.guardians %}
+          <li class="list-group-item px-0">
+            <div class="d-flex justify-content-between">
+              <strong>{{ g_link.guardian.full_name }}</strong>
+              <span class="badge bg-info-subtle text-info border">{{ g_link.guardian.relationship_to_patient }}</span>
+            </div>
+            <div class="text-muted mt-1">
+              <i class="fas fa-phone me-1"></i>{{ g_link.guardian.phone }}
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-3">No secondary guardians listed.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Diagnoses Card -->
+      <div class="card shadow-sm p-3 mt-3">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+          <h5 class="fw-bold mb-0"><i class="fas fa-stethoscope text-success me-2"></i>Diagnoses</h5>
+          {% if current_user and (current_user.is_admin or current_user.is_doctor or current_user.is_hospital_staff) %}
+          <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addDiagnosisModal">
+            <i class="fas fa-plus"></i> Add
+          </button>
+          {% endif %}
+        </div>
+        <ul class="list-group list-group-flush small">
+          {% for pd in patient.patient_diagnoses %}
+          <li class="list-group-item px-0">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <strong>{{ pd.diagnosis.name if pd.diagnosis else 'Diagnosis' }}</strong>
+                <div class="text-muted"><small>Code: {{ pd.diagnosis.code if pd.diagnosis else '' }} &bull; {{ pd.diagnosed_date.strftime('%b %d, %Y') if pd.diagnosed_date else '' }}</small></div>
+                {% if pd.notes %}<div class="text-secondary small mt-1">{{ pd.notes }}</div>{% endif %}
+              </div>
+              <span class="badge bg-{{ 'danger' if pd.severity == 'Severe' else 'warning text-dark' if pd.severity == 'Moderate' else 'info text-dark' }}">{{ pd.severity }}</span>
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-3">No secondary diagnoses recorded.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right Column: Lab Trends & Care Schedules -->
+    <div class="col-lg-8">
+      
+      <!-- Hemoglobin History Section -->
+      <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-tint me-2"></i>Hemoglobin Tracking (Hb g/dL)</h5>
+            <small class="text-muted">Target pre-transfusion threshold: &ge; 9.5 g/dL</small>
+          </div>
+          <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#addHbModal">
+            <i class="fas fa-plus-circle me-1"></i> Log Hb Test
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Date</th>
+                <th>Hb Level</th>
+                <th>RBC Count</th>
+                <th>Diagnostic Lab</th>
+                <th>Clinical Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rec in hb_records %}
+              <tr>
+                <td>{{ rec.test_date.strftime('%b %d, %Y') }}</td>
+                <td>
+                  <span class="fw-bold fs-6 {% if rec.hb_level < 8.0 %}text-danger{% elif rec.hb_level < 9.5 %}text-warning{% else %}text-success{% endif %}">
+                    {{ rec.hb_level }} g/dL
+                  </span>
+                </td>
+                <td>{{ rec.rbc_count or 'N/A' }} M/&mu;L</td>
+                <td><small>{{ rec.lab_name }}</small></td>
+                <td><small class="text-muted">{{ rec.notes or '-' }}</small></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No laboratory hemoglobin records yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Serum Ferritin (Iron Overload) Monitoring -->
+      <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0 text-warning text-dark"><i class="fas fa-atom text-warning me-2"></i>Serum Ferritin (Iron Overload ng/mL)</h5>
+            <small class="text-muted">Standard safety threshold: &le; 1000 ng/mL</small>
+          </div>
+          <button class="btn btn-sm btn-outline-warning text-dark" data-bs-toggle="modal" data-bs-target="#addFerritinModal">
+            <i class="fas fa-plus-circle me-1"></i> Log Ferritin
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Test Date</th>
+                <th>Ferritin Level</th>
+                <th>Status Indicator</th>
+                <th>Diagnostic Lab</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fer in ferritin_records %}
+              <tr>
+                <td>{{ fer.test_date.strftime('%b %d, %Y') }}</td>
+                <td><strong>{{ fer.ferritin_level }} ng/mL</strong></td>
+                <td>
+                  {% if fer.is_elevated %}
+                    <span class="badge bg-danger"><i class="fas fa-arrow-up me-1"></i>Elevated (Needs Chelation)</span>
+                  {% else %}
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Within Target</span>
+                  {% endif %}
+                </td>
+                <td><small>{{ fer.lab_name }}</small></td>
+                <td><small class="text-muted">{{ fer.notes or '-' }}</small></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No ferritin iron readings logged.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Medications & Iron Chelation -->
+      <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-pills me-2"></i>Active Prescriptions & Chelation</h5>
+          <a href="{{ url_for('care.prescribe') }}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-prescription me-1"></i> Prescribe
+          </a>
+        </div>
+        <ul class="list-group list-group-flush small">
+          {% for med in patient.patient_medications %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+              <strong class="fs-6">{{ med.medication.name }}</strong> ({{ med.medication.generic_name }})
+              <div class="text-muted">{{ med.dosage }} &bull; {{ med.frequency }} - {{ med.instructions }}</div>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success">Active</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-3">No active prescriptions currently assigned.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Hemoglobin -->
+<div class="modal fade" id="addHbModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('patients.add_hemoglobin', id=patient.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="fas fa-tint text-danger me-2"></i>Log Hemoglobin Test</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hemoglobin Level (g/dL) <span class="text-danger">*</span></label>
+            <input type="number" step="0.1" name="hb_level" class="form-control" placeholder="e.g. 7.8" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">RBC Count (M/&mu;L)</label>
+            <input type="number" step="0.01" name="rbc_count" class="form-control" placeholder="e.g. 3.2">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Test Date</label>
+            <input type="date" name="test_date" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Diagnostic Lab</label>
+            <input type="text" name="lab_name" class="form-control" value="Central Diagnostic Pathology">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Clinical Notes</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="Pre-transfusion routine check"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Save Hb Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Ferritin -->
+<div class="modal fade" id="addFerritinModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('patients.add_ferritin', id=patient.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="fas fa-atom text-warning me-2"></i>Log Serum Ferritin Test</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Ferritin Level (ng/mL) <span class="text-danger">*</span></label>
+            <input type="number" step="0.1" name="ferritin_level" class="form-control" placeholder="e.g. 1850.0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Target Level (ng/mL)</label>
+            <input type="number" step="0.1" name="target_level" class="form-control" value="1000.0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Test Date</label>
+            <input type="date" name="test_date" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Diagnostic Lab</label>
+            <input type="text" name="lab_name" class="form-control" value="Central Diagnostic Pathology">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="Iron overload evaluation"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning text-dark fw-semibold">Save Ferritin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Guardian -->
+<div class="modal fade" id="addGuardianModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('patients.add_guardian', id=patient.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="fas fa-users text-primary me-2"></i>Add Guardian</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Guardian Full Name <span class="text-danger">*</span></label>
+            <input type="text" name="full_name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Relationship <span class="text-danger">*</span></label>
+            <select name="relationship_to_patient" class="form-select" required>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+              <option value="Brother">Brother</option>
+              <option value="Sister">Sister</option>
+              <option value="Uncle">Uncle</option>
+              <option value="Aunt">Aunt</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+            <input type="tel" name="phone" class="form-control" placeholder="0300-1234567" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">CNIC</label>
+            <input type="text" name="cnic" class="form-control" placeholder="42101-XXXXXXX-X">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Guardian</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Diagnosis -->
+<div class="modal fade" id="addDiagnosisModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('patients.add_diagnosis', id=patient.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="fas fa-stethoscope text-success me-2"></i>Link Diagnosis</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Diagnosis Catalog <span class="text-danger">*</span></label>
+            <select name="diagnosis_id" class="form-select" required>
+              <option value="">-- Select Diagnosis --</option>
+              {% for d in all_diagnoses %}
+              <option value="{{ d.id }}">{{ d.code }} - {{ d.name }} ({{ d.category }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Diagnosis Date <span class="text-danger">*</span></label>
+            <input type="date" name="diagnosed_date" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Severity <span class="text-danger">*</span></label>
+            <select name="severity" class="form-select" required>
+              <option value="Mild">Mild</option>
+              <option value="Moderate" selected>Moderate</option>
+              <option value="Severe">Severe</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Clinical Notes</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="Clinical observations, genetic screening details..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success fw-semibold">Save Diagnosis</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

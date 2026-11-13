@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Request #{{ request_obj.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Request Header Card -->
+  <div class="card shadow-sm p-4 mb-4 {% if request_obj.urgency == 'Emergency' %}border-danger border-2{% endif %}">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <h3 class="fw-bold mb-0 text-danger">Blood Request #{{ request_obj.id }}</h3>
+          {{ macros.blood_badge(request_obj.blood_group.name) }}
+          {{ macros.status_badge(request_obj.urgency) }}
+          {{ macros.status_badge(request_obj.status) }}
+        </div>
+        <p class="text-muted small mb-0">
+          Created on {{ request_obj.created_at.strftime('%B %d, %Y at %I:%M %p') }} &bull;
+          Needed by: <strong>{{ request_obj.needed_by_date.strftime('%B %d, %Y') }}</strong>
+        </p>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        {% if current_user and (current_user.is_admin or current_user.is_hospital_staff or current_user.is_doctor) %}
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+          <i class="fas fa-sliders-h me-1"></i> Update Status
+        </button>
+        {% if request_obj.urgency != 'Emergency' and request_obj.status != 'Fulfilled' %}
+        <form action="{{ url_for('requests.trigger_emergency', id=request_obj.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger btn-sm fw-bold">
+            <i class="fas fa-bullhorn animate-pulse me-1"></i> Broadcast SOS Emergency
+          </button>
+        </form>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Details & Matched Donors (if Emergency) -->
+    <div class="col-lg-7">
+      
+      <!-- Key Requisition Details -->
+      <div class="card shadow-sm p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-info-circle text-danger me-2"></i>Requisition Information</h5>
+        <div class="row g-3 small">
+          <div class="col-sm-6">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Component & Required Units</div>
+              <h5 class="fw-bold mb-0 text-danger">{{ request_obj.units_fulfilled }} / {{ request_obj.units_requested }} Units</h5>
+              <small class="text-muted">{{ request_obj.component_type }}</small>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Hospital Facility</div>
+              <h6 class="fw-bold mb-0">{{ request_obj.hospital.name }}</h6>
+              <small class="text-muted">{{ request_obj.hospital.address }}</small>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Patient Beneficiary</div>
+              {% if request_obj.patient %}
+                <h6 class="fw-bold mb-0">
+                  <a href="{{ url_for('patients.view', id=request_obj.patient.id) }}" class="text-danger">
+                    {{ request_obj.patient.full_name }} (MRN: {{ request_obj.patient.mrn }})
+                  </a>
+                </h6>
+                <div class="text-muted small mt-1">Diagnosis: {{ request_obj.patient.diagnosis.name if request_obj.patient.diagnosis else 'Thalassemia' }}</div>
+              {% else %}
+                <span class="text-muted">Emergency Hospital Blood Bank Stock Pool</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 border rounded bg-body-tertiary">
+              <div class="text-muted mb-1">Clinical Reason / Doctor Remarks</div>
+              <p class="mb-0">{{ request_obj.reason }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Matched Donors (if Emergency SOS) -->
+      {% if emergency %}
+      <div class="card shadow-sm p-4 mb-4 border-danger">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-satellite-dish me-2 animate-pulse"></i>Algorithmic Donor Matches</h5>
+            <small class="text-muted">Filtered by ABO compatibility, city, and 90-day donation interval</small>
+          </div>
+          <span class="badge bg-danger">{{ matches|length }} Matched Donors</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Donor Name</th>
+                <th>Group</th>
+                <th>Distance</th>
+                <th>Compatibility</th>
+                <th>Donor Response</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in matches %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('donors.view', id=m.donor.id) }}" class="fw-bold text-dark">
+                    {{ m.donor.full_name }}
+                  </a>
+                  <div><small class="text-muted">{{ m.donor.user.phone if m.donor.user else '' }}</small></div>
+                </td>
+                <td>{{ macros.blood_badge(m.donor.blood_group.name) }}</td>
+                <td>~{{ m.match_distance_km }} km</td>
+                <td><span class="badge bg-success-subtle text-success border border-success">{{ m.match_score|int }}%</span></td>
+                <td>
+                  {% if m.status == 'Accepted' %}
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Accepted</span>
+                  {% elif m.status == 'Declined' %}
+                    <span class="badge bg-secondary">Declined</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Notified</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No compatible local donors located yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right Column: Status Transition Audit Logs -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-stream text-secondary me-2"></i>Status History Timeline</h5>
+        <ul class="list-group list-group-flush small">
+          {% for log in status_logs %}
+          <li class="list-group-item px-0 py-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge bg-secondary">{{ log.previous_status }} &rarr; {{ log.new_status }}</span>
+              <span class="text-muted" style="font-size: 0.75rem;">{{ log.created_at.strftime('%b %d, %I:%M %p') }}</span>
+            </div>
+            <p class="mb-1 text-dark">{{ log.notes or 'Status transition recorded' }}</p>
+            <div class="text-muted" style="font-size: 0.75rem;">Updated by: {{ log.changed_by.full_name if log.changed_by else 'System' }}</div>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted text-center py-3">No status transitions recorded.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Update Status -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('requests.update_status', id=request_obj.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Update Request Status</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">New Status</label>
+            <select name="status" class="form-select" required>
+              <option value="Pending" {% if request_obj.status == 'Pending' %}selected{% endif %}>Pending</option>
+              <option value="In Progress" {% if request_obj.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+              <option value="Fulfilled" {% if request_obj.status == 'Fulfilled' %}selected{% endif %}>Fulfilled</option>
+              <option value="Cancelled" {% if request_obj.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Units Fulfilled So Far</label>
+            <input type="number" min="0" max="{{ request_obj.units_requested }}" name="units_fulfilled" class="form-control" value="{{ request_obj.units_fulfilled }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notes / Explanation</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Donor arrived and completed crossmatch"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% import "macros/common.html" as macros %}
+
+{% block title %}Emergency Blood Matches{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-bullhorn text-danger me-2"></i>My Matched Emergency Requests</h3>
+      <p class="text-muted small mb-0">Live emergency broadcasts where your blood group and location match a critical need</p>
+    </div>
+    <div class="text-end">
+      {{ macros.blood_badge(donor.blood_group.name) }}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% for match in matches %}
+    {% set req = match.emergency_request %}
+    <div class="col-md-6 col-lg-6">
+      <div class="card shadow-sm h-100 p-4 border-2 {% if match.status == 'Notified' %}border-danger{% else %}border-secondary{% endif %}">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <span class="badge bg-danger animate-pulse me-1">EMERGENCY SOS</span>
+            {{ macros.status_badge(match.status) }}
+          </div>
+          <span class="text-muted small">{{ match.notified_at.strftime('%b %d, %I:%M %p') }}</span>
+        </div>
+
+        <h4 class="fw-bold mb-1">
+          Need {{ req.units_needed }} Unit(s) of {{ macros.blood_badge(req.blood_group.name) }}
+        </h4>
+        <p class="text-secondary small mb-3">
+          <i class="fas fa-hospital text-danger me-1"></i> Hospital: <strong>{{ req.hospital.name }}</strong><br>
+          <i class="fas fa-map-marker-alt text-danger me-1"></i> Address: {{ req.hospital.address }}<br>
+          <i class="fas fa-phone-alt text-danger me-1"></i> Hotline: {{ req.hospital.emergency_hotline or req.hospital.phone }}
+        </p>
+
+        <div class="p-2 rounded bg-body-tertiary small mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Match Compatibility Score:</span>
+            <strong class="text-success">{{ match.match_score|int }}% Compatible</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Estimated Distance:</span>
+            <strong>~{{ match.match_distance_km }} km within city</strong>
+          </div>
+        </div>
+
+        <div class="mt-auto">
+          {% if match.status == 'Notified' %}
+          <div class="d-flex gap-2">
+            <form action="{{ url_for('donors.respond_match', match_id=match.id) }}" method="POST" class="flex-grow-1">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="Accepted">
+              <button type="submit" class="btn btn-success w-100 fw-bold">
+                <i class="fas fa-check-circle me-1"></i> I Can Donate
+              </button>
+            </form>
+            <form action="{{ url_for('donors.respond_match', match_id=match.id) }}" method="POST" class="flex-grow-1">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="action" value="Declined">
+              <button type="submit" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-times me-1"></i> Unavailable
+              </button>
+            </form>
+          </div>
+          {% elif match.status == 'Accepted' %}
+          <div class="alert alert-success py-2 text-center mb-0 small">
+            <i class="fas fa-check-circle me-1"></i> You accepted this emergency request. Please proceed to <strong>{{ req.hospital.name }}</strong>!
+          </div>
+          {% else %}
+          <div class="text-muted small text-center">
+            You declined this request on {{ match.responded_at.strftime('%b %d') if match.responded_at else '' }}.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="card p-5 text-center text-muted shadow-sm">
+        <i class="fas fa-shield-heart fs-1 text-success mb-3 d-block"></i>
+        <h4 class="fw-bold">No Urgent Matches Right Now</h4>
+        <p class="text-secondary small mb-0">You will be notified immediately when a patient in your area urgently needs your blood group.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
